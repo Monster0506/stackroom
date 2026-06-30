@@ -13,20 +13,22 @@ from pathlib import Path
 from .models import Book
 from .lookup import lookup_isbn, lookup_title_author
 
-COVERS_DIR = Path(settings.BASE_DIR) / 'covers'
+COVERS_DIR = Path(settings.BASE_DIR) / "covers"
 
 
 def _download_cover(pk, url):
     """Fetch a cover image and cache it to disk. Runs in a background thread."""
     COVERS_DIR.mkdir(exist_ok=True)
-    dest = COVERS_DIR / f'{pk}.img'
-    ct_dest = COVERS_DIR / f'{pk}.ct'
+    dest = COVERS_DIR / f"{pk}.img"
+    ct_dest = COVERS_DIR / f"{pk}.ct"
     if dest.exists():
         return
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=15) as resp:
-            content_type = resp.headers.get('Content-Type', 'image/jpeg').split(';')[0].strip()
+            content_type = (
+                resp.headers.get("Content-Type", "image/jpeg").split(";")[0].strip()
+            )
             dest.write_bytes(resp.read())
             ct_dest.write_text(content_type)
     except Exception:
@@ -37,11 +39,20 @@ def library(request):
     q = request.GET.get("q", "").strip()
     books = Book.objects.all()
     if q:
-        books = books.filter(Q(title__icontains=q) | Q(author__icontains=q) | Q(isbn__icontains=q))
-    return render(request, "books/library.html", {
-        "books": books,
-        "q": q,
-    })
+        books = books.filter(
+            Q(title__icontains=q)
+            | Q(author__icontains=q)
+            | Q(isbn__icontains=q)
+            | Q(description__icontains=q)
+        )
+    return render(
+        request,
+        "books/library.html",
+        {
+            "books": books,
+            "q": q,
+        },
+    )
 
 
 def add_book(request):
@@ -94,7 +105,9 @@ def save_book(request):
         page_count=data.get("page_count") or None,
     )
     if book.cover_url:
-        threading.Thread(target=_download_cover, args=(book.pk, book.cover_url), daemon=True).start()
+        threading.Thread(
+            target=_download_cover, args=(book.pk, book.cover_url), daemon=True
+        ).start()
     return JsonResponse({"id": book.pk, "duplicate": False})
 
 
@@ -103,14 +116,14 @@ def cover_image(request, pk):
     if not book.cover_url:
         return HttpResponse(status=404)
     COVERS_DIR.mkdir(exist_ok=True)
-    img_path = COVERS_DIR / f'{pk}.img'
-    ct_path  = COVERS_DIR / f'{pk}.ct'
+    img_path = COVERS_DIR / f"{pk}.img"
+    ct_path = COVERS_DIR / f"{pk}.ct"
     if not img_path.exists():
         _download_cover(pk, book.cover_url)
     if not img_path.exists():
         return redirect(book.cover_url)
-    content_type = ct_path.read_text() if ct_path.exists() else 'image/jpeg'
-    return FileResponse(open(img_path, 'rb'), content_type=content_type)
+    content_type = ct_path.read_text() if ct_path.exists() else "image/jpeg"
+    return FileResponse(open(img_path, "rb"), content_type=content_type)
 
 
 def book_detail(request, pk):

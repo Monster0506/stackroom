@@ -2,7 +2,9 @@ import os
 import requests
 from django.conf import settings
 
-OPENLIBRARY_ISBN = "https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
+OPENLIBRARY_ISBN = (
+    "https://openlibrary.org/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data"
+)
 OPENLIBRARY_SEARCH = "https://openlibrary.org/search.json"
 OPENLIBRARY_WORKS = "https://openlibrary.org/search.json?isbn={isbn}"
 GOOGLE_BOOKS = "https://www.googleapis.com/books/v1/volumes"
@@ -12,7 +14,9 @@ HEADERS = {"User-Agent": "booktracker/1.0 (personal book tracker)"}
 
 def _google_params(extra: dict) -> dict:
     params = dict(extra)
-    key = getattr(settings, "GOOGLE_BOOKS_API_KEY", "") or os.environ.get("GOOGLE_BOOKS_API_KEY", "")
+    key = getattr(settings, "GOOGLE_BOOKS_API_KEY", "") or os.environ.get(
+        "GOOGLE_BOOKS_API_KEY", ""
+    )
     if key:
         params["key"] = key
     return params
@@ -45,7 +49,9 @@ def lookup_isbn(isbn: str) -> dict | None:
     # 1. Open Library books API (exact match)
     for candidate in candidates:
         try:
-            resp = requests.get(OPENLIBRARY_ISBN.format(isbn=candidate), headers=HEADERS, timeout=6)
+            resp = requests.get(
+                OPENLIBRARY_ISBN.format(isbn=candidate), headers=HEADERS, timeout=6
+            )
             data = resp.json()
             key = f"ISBN:{candidate}"
             if key in data:
@@ -58,7 +64,11 @@ def lookup_isbn(isbn: str) -> dict | None:
                     "author": authors,
                     "publisher": publishers,
                     "published_date": book.get("publish_date", ""),
-                    "description": book.get("notes", "") if isinstance(book.get("notes"), str) else "",
+                    "description": (
+                        book.get("notes", "")
+                        if isinstance(book.get("notes"), str)
+                        else ""
+                    ),
                     "cover_url": _ol_cover(book.get("cover", {})),
                     "page_count": book.get("number_of_pages"),
                 }
@@ -66,15 +76,21 @@ def lookup_isbn(isbn: str) -> dict | None:
             pass
 
     for candidate in candidates:
-        for params in [{"isbn": candidate, "limit": 1}, {"q": f"isbn:{candidate}", "limit": 1}]:
+        for params in [
+            {"isbn": candidate, "limit": 1},
+            {"q": f"isbn:{candidate}", "limit": 1},
+        ]:
             try:
-                resp = requests.get(OPENLIBRARY_SEARCH, params=params, headers=HEADERS, timeout=6)
+                resp = requests.get(
+                    OPENLIBRARY_SEARCH, params=params, headers=HEADERS, timeout=6
+                )
                 docs = resp.json().get("docs", [])
                 if docs:
                     doc = docs[0]
                     cover = (
                         f"https://covers.openlibrary.org/b/id/{doc['cover_i']}-L.jpg"
-                        if doc.get("cover_i") else ""
+                        if doc.get("cover_i")
+                        else ""
                     )
                     return {
                         "isbn": candidate,
@@ -124,19 +140,26 @@ def lookup_title_author(title: str, author: str = "") -> list[dict]:
         params = {"title": title, "limit": 10}
         if author:
             params["author"] = author
-        resp = requests.get(OPENLIBRARY_SEARCH, params=params, headers=HEADERS, timeout=6)
+        resp = requests.get(
+            OPENLIBRARY_SEARCH, params=params, headers=HEADERS, timeout=6
+        )
         for doc in resp.json().get("docs", [])[:10]:
-            results.append({
-                "isbn": (doc.get("isbn") or [""])[0],
-                "title": doc.get("title", ""),
-                "author": ", ".join(doc.get("author_name", [])),
-                "publisher": ", ".join((doc.get("publisher") or [])[:2]),
-                "published_date": str(doc.get("first_publish_year", "")),
-                "description": "",
-                "cover_url": f"https://covers.openlibrary.org/b/id/{doc['cover_i']}-M.jpg"
-                if doc.get("cover_i") else "",
-                "page_count": doc.get("number_of_pages_median"),
-            })
+            results.append(
+                {
+                    "isbn": (doc.get("isbn") or [""])[0],
+                    "title": doc.get("title", ""),
+                    "author": ", ".join(doc.get("author_name", [])),
+                    "publisher": ", ".join((doc.get("publisher") or [])[:2]),
+                    "published_date": str(doc.get("first_publish_year", "")),
+                    "description": "",
+                    "cover_url": (
+                        f"https://covers.openlibrary.org/b/id/{doc['cover_i']}-M.jpg"
+                        if doc.get("cover_i")
+                        else ""
+                    ),
+                    "page_count": doc.get("number_of_pages_median"),
+                }
+            )
     except Exception:
         pass
 
