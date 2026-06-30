@@ -1,117 +1,115 @@
 {% extends "base.html" %}
-{% block title %}Scan — BookTracker{% endblock %}
+{% block title %}Scan{% endblock %}
 
 {% block header_action %}
-<span class="text-sm text-white/60 font-medium">Barcode Scanner</span>
+<span class="text-xs text-ink-50/60 uppercase tracking-wide">New Accession</span>
 {% endblock %}
 
 {% block content %}
-<div class="flex flex-col gap-4 -mx-4 -mt-4">
+<div class="flex flex-col gap-3 -mx-4 -mt-4">
 
-  <!-- Full-width camera viewport -->
-  <div class="relative bg-black overflow-hidden" style="height: 56vw; max-height: 340px; min-height: 220px;">
+  <!-- Full-width camera viewport, capped so controls stay reachable on short phones -->
+  <div class="relative bg-black overflow-hidden" style="height: min(56vw, 38vh); max-height: 320px; min-height: 200px;">
     <video id="preview" class="w-full h-full object-cover" autoplay playsinline muted></video>
     <canvas id="snap" class="hidden absolute inset-0 w-full h-full object-cover"></canvas>
 
     <!-- Scanning reticle -->
     <div id="reticle" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <div class="relative" style="width:72%; height:42%;">
+      <div class="relative" style="width:80%; height:46%;">
         <!-- Corner brackets -->
-        <div class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-white rounded-tl-sm"></div>
-        <div class="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-white rounded-tr-sm"></div>
-        <div class="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-white rounded-bl-sm"></div>
-        <div class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-white rounded-br-sm"></div>
+        <div class="absolute top-0 left-0 w-7 h-7 border-t-2 border-l-2 border-[#f4ecd8]"></div>
+        <div class="absolute top-0 right-0 w-7 h-7 border-t-2 border-r-2 border-[#f4ecd8]"></div>
+        <div class="absolute bottom-0 left-0 w-7 h-7 border-b-2 border-l-2 border-[#f4ecd8]"></div>
+        <div class="absolute bottom-0 right-0 w-7 h-7 border-b-2 border-r-2 border-[#f4ecd8]"></div>
         <!-- Scan line -->
-        <div id="scan-line" class="hidden absolute left-2 right-2 h-0.5 bg-amber-400/80 rounded-full" style="top:50%;"></div>
+        <div id="scan-line" class="hidden absolute left-2 right-2 h-0.5 bg-amber-500/80" style="top:50%;"></div>
       </div>
-      <div class="absolute bottom-4 left-0 right-0 text-center">
-        <span class="text-white/70 text-xs font-medium bg-black/30 px-3 py-1 rounded-full">Align barcode within frame</span>
+      <div class="absolute bottom-3 left-0 right-0 text-center">
+        <span class="text-[#f4ecd8]/80 text-[11px] uppercase tracking-wide font-bold bg-black/40 px-3 py-1">Align barcode in frame</span>
       </div>
     </div>
 
     <!-- Tap-to-capture hint -->
     <div id="tap-hint" class="hidden absolute inset-0 flex items-center justify-center pointer-events-none">
       <div class="flex flex-col items-center gap-2">
-        <div class="w-16 h-16 rounded-full border-2 border-white/60 flex items-center justify-center">
-          <div class="w-10 h-10 rounded-full bg-white/20"></div>
+        <div class="w-14 h-14 rounded-full border-2 border-[#f4ecd8]/60 flex items-center justify-center">
+          <div class="w-9 h-9 rounded-full bg-[#f4ecd8]/20"></div>
         </div>
-        <span class="text-white text-sm font-medium">Tap to capture</span>
+        <span class="text-[#f4ecd8] text-xs font-bold uppercase tracking-wide">Tap to capture</span>
       </div>
     </div>
 
     <!-- Status overlay -->
-    <div id="status-overlay" class="hidden absolute inset-0 bg-black/70 flex items-center justify-center">
+    <div id="status-overlay" class="hidden absolute inset-0 bg-black/75 flex items-center justify-center">
       <div class="text-center px-6">
-        <div id="status-icon" class="text-4xl mb-2">⏳</div>
-        <p id="status-msg" class="text-white font-semibold text-base"></p>
-        <p id="status-sub" class="text-white/60 text-sm mt-1"></p>
+        <p id="status-msg" class="text-[#f4ecd8] font-bold text-base"></p>
+        <p id="status-sub" class="text-[#f4ecd8]/60 text-sm mt-1"></p>
       </div>
     </div>
   </div>
-
-  <!-- Controls -->
-  <div class="px-4 flex gap-3">
+  
+  <div class="px-4 grid grid-cols-[1fr_auto] gap-2">
     <button id="btn-start" onclick="startCamera(event)"
-      class="flex-1 flex items-center justify-center gap-2 bg-ink-900 text-white py-3.5 rounded-2xl font-semibold text-sm active:scale-95 transition shadow-card">
+      class="col-span-2 flex items-center justify-center gap-2 bg-ink-900 text-ink-50 py-4 rounded-sm font-bold text-sm active:scale-[0.98] transition">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
       </svg>
       Start Camera
     </button>
     <button id="btn-retake" onclick="retake()"
-      class="hidden flex-1 flex items-center justify-center gap-2 bg-white border border-ink-200 text-ink-700 py-3.5 rounded-2xl font-semibold text-sm active:scale-95 transition shadow-card">
+      class="hidden col-span-2 flex items-center justify-center gap-2 label-slot border border-ink-400/40 text-ink-700 py-4 rounded-sm font-bold text-sm active:scale-[0.98] transition">
       ↺ Retake
     </button>
     <button id="btn-stop" onclick="stopCamera()"
-      class="hidden w-12 flex items-center justify-center bg-white border border-ink-200 text-ink-500 rounded-2xl active:scale-95 transition">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      class="hidden col-span-2 flex items-center justify-center gap-2 label-slot border border-ink-400/40 text-ink-600 py-3 rounded-sm text-xs font-bold uppercase tracking-wide active:scale-[0.98] transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z"/>
       </svg>
+      Stop Camera
     </button>
   </div>
 
   <!-- Divider -->
-  <div class="px-4 flex items-center gap-3">
-    <div class="flex-1 h-px bg-ink-200"></div>
-    <span class="text-xs text-ink-400 font-medium">or enter ISBN</span>
-    <div class="flex-1 h-px bg-ink-200"></div>
+  <div class="px-4 flex items-center gap-2 text-[11px] text-ink-600">
+    <div class="flex-1 h-px bg-ink-400/40"></div>OR ENTER ISBN BY HAND<div class="flex-1 h-px bg-ink-400/40"></div>
   </div>
 
   <!-- Manual ISBN -->
   <div class="px-4">
     <div class="flex gap-2">
-      <input id="manual-isbn" type="text" inputmode="numeric" placeholder="e.g. 9780140449136"
-        class="flex-1 bg-white border border-ink-200 rounded-2xl px-4 py-3 text-sm shadow-card focus:outline-none focus:ring-2 focus:ring-ink-900 transition"
+      <input id="manual-isbn" type="text" inputmode="numeric" placeholder="978-0-14-044913-6"
+        class="flex-1 label-slot border border-ink-400/40 rounded-sm px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition"
         onkeydown="if(event.key==='Enter') lookupISBN()">
       <button onclick="lookupISBN()"
-        class="bg-ink-900 text-white px-5 rounded-2xl text-sm font-semibold active:scale-95 transition shadow-card">
-        Go
+        class="bg-amber text-ink-50 px-5 rounded-sm text-sm font-bold active:scale-95 transition">
+        File
       </button>
     </div>
   </div>
 
   <!-- Result card -->
   <div id="result-card" class="hidden mx-4 animate-in">
-    <div class="bg-white rounded-3xl shadow-card overflow-hidden">
-      <div class="flex gap-4 p-4">
+    <div class="index-card border border-ink-400/40 rounded-sm overflow-hidden">
+      <div class="flex gap-4 p-4 pl-8 relative">
+        <div class="punch-hole absolute left-3 top-1/2 -translate-y-1/2"></div>
         <div class="relative flex-shrink-0">
-          <img id="r-cover" src="" alt="" class="w-16 h-22 object-cover rounded-xl bg-ink-100 hidden shadow">
-          <div id="r-cover-placeholder" class="w-16 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center" style="height:5.5rem">
-            <span class="text-2xl">📖</span>
+          <img id="r-cover" src="" alt="" class="w-16 h-22 object-cover rounded-sm bg-ink-200 hidden border border-ink-400/40">
+          <div id="r-cover-placeholder" class="w-16 rounded-sm bg-ink-200 flex items-center justify-center border border-ink-400/40 px-1" style="height:5.5rem">
+            <span class="text-[9px] uppercase tracking-wide text-ink-500 text-center font-bold">No Cover</span>
           </div>
         </div>
         <div class="flex-1 min-w-0 self-center">
           <p id="r-title" class="font-bold text-ink-900 text-sm leading-tight line-clamp-2"></p>
-          <p id="r-author" class="text-xs text-ink-500 mt-1 truncate"></p>
-          <p id="r-pub" class="text-xs text-ink-400 mt-0.5 truncate"></p>
-          <p id="r-isbn" class="text-xs text-ink-300 mt-0.5 font-mono"></p>
+          <p id="r-author" class="text-xs text-ink-600 mt-1 truncate"></p>
+          <p id="r-pub" class="text-xs text-ink-500 mt-0.5 truncate"></p>
+          <p id="r-isbn" class="text-xs text-ink-500 mt-0.5 font-bold"></p>
         </div>
       </div>
       <div class="px-4 pb-4">
         <button onclick="saveBook()"
-          class="w-full bg-ink-900 text-white py-3.5 rounded-2xl font-bold text-base active:scale-95 transition shadow-card">
-          + Add to Library
+          class="w-full bg-ink-900 text-ink-50 py-3.5 rounded-sm font-bold text-base active:scale-[0.98] transition">
+          + Add to Shelf
         </button>
       </div>
     </div>
@@ -119,25 +117,22 @@
 
   <!-- Not found -->
   <div id="not-found" class="hidden mx-4 animate-in">
-    <div class="bg-amber-50 border border-amber-200 rounded-3xl p-5">
-      <div class="flex items-start gap-3 mb-4">
-        <span class="text-2xl">🔍</span>
-        <div>
-          <p class="font-semibold text-amber-900 text-sm">Book not found</p>
-          <p id="scanned-isbn-line" class="text-xs text-amber-700 mt-0.5 font-mono"></p>
-          <p class="text-xs text-amber-700 mt-1">Try a different ISBN printed on the book cover.</p>
-        </div>
+    <div class="label-slot border border-amber-700/40 rounded-sm p-5">
+      <div class="mb-4">
+        <p class="font-bold text-amber-700 text-sm uppercase tracking-wide">Book Not Found</p>
+        <p id="scanned-isbn-line" class="text-xs text-amber-700/80 mt-0.5 font-bold"></p>
+        <p class="text-xs text-ink-600 mt-1">Try a different ISBN printed on the book cover.</p>
       </div>
       <div class="flex gap-2">
-        <input id="alt-isbn" type="text" inputmode="numeric" placeholder="Try another ISBN…"
-          class="flex-1 bg-white border border-amber-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+        <input id="alt-isbn" type="text" inputmode="numeric" placeholder="Try another ISBN..."
+          class="flex-1 bg-[#f4ecd8] border border-amber-700/30 rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-600"
           onkeydown="if(event.key==='Enter') tryAltISBN()">
         <button onclick="tryAltISBN()"
-          class="bg-amber-600 text-white px-4 rounded-xl text-sm font-semibold active:scale-95 transition">
+          class="bg-amber text-ink-50 px-4 rounded-sm text-sm font-bold active:scale-95 transition">
           Try
         </button>
       </div>
-      <a href="{% url 'add_book' %}" class="block text-center text-xs text-amber-700 underline mt-3">
+      <a href="{% url 'add_book' %}" class="block text-center text-xs text-ink-700 underline mt-3">
         Add manually with title / author →
       </a>
     </div>
@@ -158,8 +153,7 @@
   // Tap-to-capture wired to the camera area
   document.querySelector('.relative.bg-black').addEventListener('click', capture);
 
-  function showStatus(icon, msg, sub) {
-    document.getElementById('status-icon').textContent = icon;
+  function showStatus(msg, sub) {
     document.getElementById('status-msg').textContent = msg;
     document.getElementById('status-sub').textContent = sub || '';
     document.getElementById('status-overlay').classList.remove('hidden');
@@ -184,7 +178,7 @@
       scanLine.classList.remove('hidden');
       hideStatus();
     } catch (err) {
-      showStatus('❌', 'Camera error', err.message);
+      showStatus('Camera error', err.message);
       document.getElementById('btn-start').classList.remove('hidden');
       document.getElementById('btn-stop').classList.add('hidden');
     }
@@ -213,7 +207,7 @@
     reticle.classList.add('hidden');
     document.getElementById('btn-retake').classList.remove('hidden');
     document.getElementById('btn-stop').classList.add('hidden');
-    showStatus('⏳', 'Scanning…', 'Looking for barcode');
+    showStatus('Scanning...', 'Looking for barcode');
     setTimeout(() => decodeCanvas(canvas), 60);
   }
 
@@ -225,7 +219,7 @@
         const codes = await det.detect(canvas);
         if (codes.length) {
           const isbn = codes[0].rawValue.replace(/[^0-9X]/gi, '');
-          showStatus('✅', 'Found!', isbn);
+          showStatus('Found', isbn);
           setTimeout(() => lookupISBNValue(isbn), 400);
           return;
         }
@@ -238,10 +232,10 @@
       await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
       const result = await codeReader.decodeFromImageElement(img);
       const isbn = result.getText().replace(/[^0-9X]/gi, '');
-      showStatus('✅', 'Found!', isbn);
+      showStatus('Found', isbn);
       setTimeout(() => lookupISBNValue(isbn), 400);
     } catch {
-      showStatus('🔁', 'No barcode found', 'Hold steady and tap again');
+      showStatus('No barcode found', 'Hold steady and tap again');
     }
   }
 
@@ -269,7 +263,7 @@
   }
 
   async function lookupISBNValue(isbn) {
-    showStatus('📡', 'Looking up…', isbn);
+    showStatus('Looking up...', isbn);
     document.getElementById('result-card').classList.add('hidden');
     document.getElementById('not-found').classList.add('hidden');
     const resp = await fetch(`/api/isbn/?isbn=${encodeURIComponent(isbn)}`);
@@ -287,7 +281,7 @@
     pendingBook = book;
     document.getElementById('r-title').textContent = book.title;
     document.getElementById('r-author').textContent = book.author;
-    document.getElementById('r-pub').textContent = [book.publisher, book.published_date].filter(Boolean).join(' · ');
+    document.getElementById('r-pub').textContent = [book.publisher, book.published_date].filter(Boolean).join(' - ');
     document.getElementById('r-isbn').textContent = book.isbn ? `ISBN ${book.isbn}` : '';
     const cover = document.getElementById('r-cover');
     const placeholder = document.getElementById('r-cover-placeholder');
@@ -328,8 +322,8 @@
 
   function showToast(msg, success = true) {
     const t = document.createElement('div');
-    t.className = `fixed top-16 left-4 right-4 z-50 px-4 py-3 rounded-2xl text-sm font-semibold shadow-lg text-center animate-in
-      ${success ? 'bg-green-600 text-white' : 'bg-amber-500 text-white'}`;
+    t.className = `fixed top-16 left-4 right-4 z-50 px-4 py-3 rounded-sm text-sm font-bold shadow-lg text-center animate-in border
+      ${success ? 'bg-[#f4ecd8] text-green-800 border-green-700' : 'bg-[#f4ecd8] text-amber-700 border-amber-700'}`;
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 2800);

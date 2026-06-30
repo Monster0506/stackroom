@@ -9,7 +9,6 @@ def batch(iterable, n):
 
 @register.filter
 def spine_width(book):
-    """Fixed pixel width based on page count (14–42 px). No flex-grow."""
     if book.page_count:
         p = book.page_count
         if p < 100: return 14
@@ -21,5 +20,4 @@ def spine_width(book):
 
 @register.filter
 def spine_height(book):
-    """Pseudo-random height 136–170 px for a staggered shelf look."""
     return 136 + (book.pk * 7 + len(book.title or '') * 3) % 34

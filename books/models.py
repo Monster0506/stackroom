@@ -26,7 +26,7 @@ class Book(models.Model):
         ordering = ["-date_added"]
 
     def __str__(self):
-        return f"{self.title} — {self.author}"
+        return f"{self.title}: {self.author}"
 
     @property
     def stars(self):

@@ -65,7 +65,6 @@ def lookup_isbn(isbn: str) -> dict | None:
         except Exception:
             pass
 
-    # 2. Open Library search by ISBN (broader index — tries isbn= and q= params)
     for candidate in candidates:
         for params in [{"isbn": candidate, "limit": 1}, {"q": f"isbn:{candidate}", "limit": 1}]:
             try:
@@ -121,7 +120,6 @@ def lookup_title_author(title: str, author: str = "") -> list[dict]:
     except Exception:
         pass
 
-    # Open Library search (always try — good coverage)
     try:
         params = {"title": title, "limit": 10}
         if author:

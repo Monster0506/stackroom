@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Add Book — BookTracker{% endblock %}
+{% block title %}Add Book{% endblock %}
 
 {% block header_action %}
-<span class="text-sm text-white/60 font-medium">Add Book</span>
+<span class="text-xs text-ink-50/60 uppercase tracking-wide">New Accession</span>
 {% endblock %}
 
 {% block content %}
@@ -10,24 +10,25 @@
 
   <!-- Search -->
   <div>
-    <label class="text-xs font-semibold text-ink-500 uppercase tracking-wide mb-2 block">Search by title or author</label>
+    <label class="text-xs font-bold text-ink-600 uppercase tracking-wide mb-2 block">Search by title or author</label>
     <div class="flex gap-2">
-      <div class="relative flex-1">
-        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-300 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803 7.5 7.5 0 0016.803 15.803z"/>
-        </svg>
-        <input id="s-title" type="text" placeholder="Title…"
-          class="w-full bg-white border border-ink-200 rounded-2xl pl-10 pr-4 py-3 text-sm shadow-card focus:outline-none focus:ring-2 focus:ring-ink-900 transition"
+      <div class="label-slot border border-ink-400/40 rounded-sm px-3 flex-1 flex items-center gap-2">
+        <span class="text-[11px] uppercase tracking-wide text-ink-500 flex-shrink-0">Title:</span>
+        <input id="s-title" type="text" placeholder="..."
+          class="flex-1 bg-transparent py-3 text-sm focus:outline-none placeholder:text-ink-400"
           onkeydown="if(event.key==='Enter') doSearch()">
       </div>
       <button onclick="doSearch()"
-        class="bg-ink-900 text-white px-5 rounded-2xl text-sm font-semibold active:scale-95 transition shadow-card">
+        class="bg-ink-900 text-ink-50 px-5 rounded-sm text-sm font-bold active:scale-95 transition">
         Search
       </button>
     </div>
-    <input id="s-author" type="text" placeholder="Author (optional)"
-      class="mt-2 w-full bg-white border border-ink-200 rounded-2xl px-4 py-2.5 text-sm shadow-card focus:outline-none focus:ring-2 focus:ring-ink-900 transition"
-      onkeydown="if(event.key==='Enter') doSearch()">
+    <div class="label-slot border border-ink-400/40 rounded-sm px-3 mt-2 flex items-center gap-2">
+      <span class="text-[11px] uppercase tracking-wide text-ink-500 flex-shrink-0">Author:</span>
+      <input id="s-author" type="text" placeholder="optional"
+        class="flex-1 bg-transparent py-2.5 text-sm focus:outline-none placeholder:text-ink-400"
+        onkeydown="if(event.key==='Enter') doSearch()">
+    </div>
   </div>
 
   <!-- Search results -->
@@ -35,33 +36,34 @@
 
   <!-- Selected book preview -->
   <div id="result-card" class="hidden animate-in">
-    <div class="bg-white rounded-3xl shadow-card overflow-hidden">
-      <div class="flex gap-4 p-4">
+    <div class="index-card border border-ink-400/40 rounded-sm overflow-hidden">
+      <div class="flex gap-4 p-4 pl-8 relative">
+        <div class="punch-hole absolute left-3 top-1/2 -translate-y-1/2"></div>
         <div class="relative flex-shrink-0">
-          <img id="r-cover" src="" alt="" class="w-20 h-28 object-cover rounded-2xl bg-ink-100 hidden shadow">
-          <div id="r-cover-ph" class="w-20 h-28 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center">
-            <span class="text-3xl">📖</span>
+          <img id="r-cover" src="" alt="" class="w-20 h-28 object-cover rounded-sm bg-ink-200 hidden border border-ink-400/40">
+          <div id="r-cover-ph" class="w-20 h-28 rounded-sm bg-ink-200 border border-ink-400/40 flex items-center justify-center px-1">
+            <span class="text-[10px] uppercase tracking-wide text-ink-500 text-center font-bold">No Cover</span>
           </div>
         </div>
         <div class="flex-1 min-w-0 py-1">
           <p id="r-title" class="font-bold text-ink-900 text-base leading-tight"></p>
-          <p id="r-author" class="text-sm text-ink-500 mt-1"></p>
-          <p id="r-pub" class="text-xs text-ink-400 mt-0.5"></p>
+          <p id="r-author" class="text-sm text-ink-600 mt-1"></p>
+          <p id="r-pub" class="text-xs text-ink-500 mt-0.5"></p>
         </div>
       </div>
-      <div class="border-t border-ink-100 px-4 py-3">
-        <label class="text-xs font-semibold text-ink-500 uppercase tracking-wide mb-2 block">Add to shelf</label>
+      <div class="border-t border-ink-400/40 px-4 py-3">
+        <label class="text-xs font-bold text-ink-600 uppercase tracking-wide mb-2 block">Add to shelf</label>
         <div class="flex gap-2">
           <button onclick="setStatus('want')" data-status="want"
-            class="status-btn flex-1 py-2 rounded-xl text-xs font-semibold border border-ink-200 text-ink-600 bg-ink-50 active:scale-95 transition">
+            class="status-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-ink-500 text-ink-700 bg-[#f4ecd8] active:scale-95 transition">
             Want
           </button>
           <button onclick="setStatus('reading')" data-status="reading"
-            class="status-btn flex-1 py-2 rounded-xl text-xs font-semibold border border-blue-200 text-blue-700 bg-blue-50 active:scale-95 transition">
+            class="status-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-blue-700 text-blue-800 bg-[#f4ecd8] active:scale-95 transition">
             Reading
           </button>
           <button onclick="setStatus('read')" data-status="read"
-            class="status-btn flex-1 py-2 rounded-xl text-xs font-semibold border border-green-200 text-green-700 bg-green-50 active:scale-95 transition">
+            class="status-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-green-700 text-green-800 bg-[#f4ecd8] active:scale-95 transition">
             Read
           </button>
         </div>
@@ -69,56 +71,54 @@
       </div>
       <div class="px-4 pb-4 flex gap-2">
         <button onclick="saveBook()"
-          class="flex-1 bg-ink-900 text-white py-3.5 rounded-2xl font-semibold text-sm active:scale-95 transition">
+          class="flex-1 bg-ink-900 text-ink-50 py-3.5 rounded-sm font-bold text-sm active:scale-[0.98] transition">
           Add to Library
         </button>
         <button onclick="clearPick()"
-          class="w-14 bg-white border border-ink-200 text-ink-500 rounded-2xl text-lg active:scale-95 transition">
-          ✕
+          class="w-20 label-slot border border-ink-400/40 text-ink-600 rounded-sm text-xs font-bold uppercase tracking-wide active:scale-95 transition">
+          Cancel
         </button>
       </div>
     </div>
   </div>
 
   <!-- Divider -->
-  <div class="flex items-center gap-3">
-    <div class="flex-1 h-px bg-ink-200"></div>
-    <span class="text-xs text-ink-400 font-medium">add manually</span>
-    <div class="flex-1 h-px bg-ink-200"></div>
+  <div class="flex items-center gap-2 text-[11px] text-ink-600">
+    <div class="flex-1 h-px bg-ink-400/40"></div>ADD MANUALLY<div class="flex-1 h-px bg-ink-400/40"></div>
   </div>
 
   <!-- Manual entry -->
-  <div class="bg-white rounded-3xl shadow-card overflow-hidden">
+  <div class="index-card border border-ink-400/40 rounded-sm overflow-hidden">
     <button onclick="toggleManual()" class="w-full flex items-center justify-between px-5 py-4 text-left">
-      <span class="font-semibold text-sm text-ink-800">Enter details manually</span>
-      <svg id="manual-chevron" class="w-4 h-4 text-ink-400 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <span class="font-bold text-sm text-ink-800 uppercase tracking-wide">Enter details by hand</span>
+      <svg id="manual-chevron" class="w-4 h-4 text-ink-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
       </svg>
     </button>
     <div id="manual-body" class="hidden px-5 pb-5 flex flex-col gap-3">
       <input id="m-title" type="text" placeholder="Title *"
-        class="w-full bg-ink-50 border border-ink-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+        class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
       <input id="m-author" type="text" placeholder="Author"
-        class="w-full bg-ink-50 border border-ink-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+        class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
       <input id="m-isbn" type="text" placeholder="ISBN" inputmode="numeric"
-        class="w-full bg-ink-50 border border-ink-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+        class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
       <div class="grid grid-cols-2 gap-3">
         <input id="m-publisher" type="text" placeholder="Publisher"
-          class="w-full bg-ink-50 border border-ink-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+          class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
         <input id="m-year" type="text" placeholder="Year" inputmode="numeric"
-          class="w-full bg-ink-50 border border-ink-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+          class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
       </div>
       <div class="flex gap-2">
         <button onclick="setManualStatus('want')" data-status="want"
-          class="mstatus-btn flex-1 py-2 rounded-xl text-xs font-semibold border border-ink-200 text-ink-600 bg-ink-50 active:scale-95 transition ring-2 ring-ink-900">Want</button>
+          class="mstatus-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-ink-500 text-ink-700 bg-[#f4ecd8] active:scale-95 transition ring-2 ring-ink-900">Want</button>
         <button onclick="setManualStatus('reading')" data-status="reading"
-          class="mstatus-btn flex-1 py-2 rounded-xl text-xs font-semibold border border-blue-200 text-blue-700 bg-blue-50 active:scale-95 transition">Reading</button>
+          class="mstatus-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-blue-700 text-blue-800 bg-[#f4ecd8] active:scale-95 transition">Reading</button>
         <button onclick="setManualStatus('read')" data-status="read"
-          class="mstatus-btn flex-1 py-2 rounded-xl text-xs font-semibold border border-green-200 text-green-700 bg-green-50 active:scale-95 transition">Read</button>
+          class="mstatus-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-green-700 text-green-800 bg-[#f4ecd8] active:scale-95 transition">Read</button>
       </div>
       <input type="hidden" id="m-status" value="want">
       <button onclick="saveManual()"
-        class="w-full bg-ink-900 text-white py-3.5 rounded-2xl font-semibold text-sm active:scale-95 transition mt-1">
+        class="w-full bg-ink-900 text-ink-50 py-3.5 rounded-sm font-bold text-sm active:scale-[0.98] transition mt-1">
         Add to Library
       </button>
     </div>
@@ -141,7 +141,7 @@
     if (!title) return;
     const author = document.getElementById('s-author').value.trim();
     const container = document.getElementById('search-results');
-    container.innerHTML = '<div class="text-center py-6 text-ink-400 text-sm">Searching…</div>';
+    container.innerHTML = '<div class="text-center py-6 text-ink-500 text-sm">Searching...</div>';
     container.classList.remove('hidden');
     document.getElementById('result-card').classList.add('hidden');
 
@@ -149,19 +149,20 @@
     const { results = [] } = await resp.json();
 
     if (!results.length) {
-      container.innerHTML = '<div class="text-center py-6 text-ink-400 text-sm">No results found.</div>';
+      container.innerHTML = '<div class="text-center py-6 text-ink-500 text-sm">No results found.</div>';
       return;
     }
 
     container.innerHTML = results.map((b, i) => `
-      <button onclick="pickBook(${i})" class="flex gap-3 bg-white rounded-2xl shadow-card p-3 text-left active:scale-[0.98] transition w-full">
+      <button onclick="pickBook(${i})" class="flex gap-3 index-card border border-ink-400/40 rounded-sm p-3 pl-6 relative text-left active:scale-[0.98] transition w-full">
+        <div class="punch-hole absolute left-2 top-1/2 -translate-y-1/2" style="width:7px;height:7px"></div>
         ${b.cover_url
-          ? `<img src="${escHtml(b.cover_url)}" class="w-12 h-16 object-cover rounded-xl bg-ink-100 flex-shrink-0 shadow">`
-          : `<div class="w-12 h-16 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 flex-shrink-0 flex items-center justify-center text-xl">📖</div>`}
+          ? `<img src="${escHtml(b.cover_url)}" class="w-12 h-16 object-cover rounded-sm bg-ink-200 border border-ink-400/40 flex-shrink-0">`
+          : `<div class="w-12 h-16 rounded-sm bg-ink-200 border border-ink-400/40 flex-shrink-0 flex items-center justify-center px-0.5"><span class="text-[8px] uppercase tracking-wide text-ink-500 text-center font-bold">No Cover</span></div>`}
         <div class="flex-1 min-w-0">
           <p class="font-semibold text-sm text-ink-900 line-clamp-2 leading-tight">${escHtml(b.title)}</p>
-          <p class="text-xs text-ink-500 mt-0.5">${escHtml(b.author)}</p>
-          <p class="text-xs text-ink-400 mt-0.5">${escHtml([b.publisher, b.published_date].filter(Boolean).join(' · '))}</p>
+          <p class="text-xs text-ink-600 mt-0.5">${escHtml(b.author)}</p>
+          <p class="text-xs text-ink-500 mt-0.5">${escHtml([b.publisher, b.published_date].filter(Boolean).join(' - '))}</p>
         </div>
       </button>
     `).join('');
@@ -173,7 +174,7 @@
     pendingBook = b;
     document.getElementById('r-title').textContent = b.title;
     document.getElementById('r-author').textContent = b.author;
-    document.getElementById('r-pub').textContent = [b.publisher, b.published_date].filter(Boolean).join(' · ');
+    document.getElementById('r-pub').textContent = [b.publisher, b.published_date].filter(Boolean).join(' - ');
     const cover = document.getElementById('r-cover'), ph = document.getElementById('r-cover-ph');
     if (b.cover_url) { cover.src = b.cover_url; cover.classList.remove('hidden'); ph.classList.add('hidden'); }
     else { cover.classList.add('hidden'); ph.classList.remove('hidden'); }

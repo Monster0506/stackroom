@@ -114,7 +114,6 @@ def cover_image(request, pk):
     if not img_path.exists():
         _download_cover(pk, book.cover_url)
     if not img_path.exists():
-        # Download failed — redirect to source so the browser still gets something
         return redirect(book.cover_url)
     content_type = ct_path.read_text() if ct_path.exists() else 'image/jpeg'
     return FileResponse(open(img_path, 'rb'), content_type=content_type)
