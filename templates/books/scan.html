@@ -299,7 +299,6 @@
 
   async function saveBook() {
     if (!pendingBook) return;
-    pendingBook.status = 'want';
     const resp = await fetch('/api/save/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },

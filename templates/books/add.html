@@ -51,25 +51,7 @@
           <p id="r-pub" class="text-xs text-ink-500 mt-0.5"></p>
         </div>
       </div>
-      <div class="border-t border-ink-400/40 px-4 py-3">
-        <label class="text-xs font-bold text-ink-600 uppercase tracking-wide mb-2 block">Add to shelf</label>
-        <div class="flex gap-2">
-          <button onclick="setStatus('want')" data-status="want"
-            class="status-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-ink-500 text-ink-700 bg-[#f4ecd8] active:scale-95 transition">
-            Want
-          </button>
-          <button onclick="setStatus('reading')" data-status="reading"
-            class="status-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-blue-700 text-blue-800 bg-[#f4ecd8] active:scale-95 transition">
-            Reading
-          </button>
-          <button onclick="setStatus('read')" data-status="read"
-            class="status-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-green-700 text-green-800 bg-[#f4ecd8] active:scale-95 transition">
-            Read
-          </button>
-        </div>
-        <input type="hidden" id="r-status" value="want">
-      </div>
-      <div class="px-4 pb-4 flex gap-2">
+      <div class="px-4 pb-4 pt-3 flex gap-2">
         <button onclick="saveBook()"
           class="flex-1 bg-ink-900 text-ink-50 py-3.5 rounded-sm font-bold text-sm active:scale-[0.98] transition">
           Add to Library
@@ -108,15 +90,6 @@
         <input id="m-year" type="text" placeholder="Year" inputmode="numeric"
           class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
       </div>
-      <div class="flex gap-2">
-        <button onclick="setManualStatus('want')" data-status="want"
-          class="mstatus-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-ink-500 text-ink-700 bg-[#f4ecd8] active:scale-95 transition ring-2 ring-ink-900">Want</button>
-        <button onclick="setManualStatus('reading')" data-status="reading"
-          class="mstatus-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-blue-700 text-blue-800 bg-[#f4ecd8] active:scale-95 transition">Reading</button>
-        <button onclick="setManualStatus('read')" data-status="read"
-          class="mstatus-btn flex-1 py-2 rounded-sm text-xs font-bold uppercase border border-green-700 text-green-800 bg-[#f4ecd8] active:scale-95 transition">Read</button>
-      </div>
-      <input type="hidden" id="m-status" value="want">
       <button onclick="saveManual()"
         class="w-full bg-ink-900 text-ink-50 py-3.5 rounded-sm font-bold text-sm active:scale-[0.98] transition mt-1">
         Add to Library
@@ -127,7 +100,7 @@
 </div>
 
 <script>
-  let pendingBook = null, selectedStatus = 'want', manualStatus = 'want';
+  let pendingBook = null;
 
   function toggleManual() {
     const body = document.getElementById('manual-body');
@@ -187,23 +160,8 @@
     document.getElementById('result-card').classList.add('hidden');
   }
 
-  function setStatus(val) {
-    selectedStatus = val;
-    document.getElementById('r-status').value = val;
-    document.querySelectorAll('.status-btn').forEach(b => b.classList.toggle('ring-2', b.dataset.status === val));
-    document.querySelectorAll('.status-btn').forEach(b => b.classList.toggle('ring-ink-900', b.dataset.status === val));
-  }
-
-  function setManualStatus(val) {
-    manualStatus = val;
-    document.getElementById('m-status').value = val;
-    document.querySelectorAll('.mstatus-btn').forEach(b => b.classList.toggle('ring-2', b.dataset.status === val));
-    document.querySelectorAll('.mstatus-btn').forEach(b => b.classList.toggle('ring-ink-900', b.dataset.status === val));
-  }
-
   async function saveBook() {
     if (!pendingBook) return;
-    pendingBook.status = selectedStatus;
     const r = await fetch('/api/save/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
@@ -223,7 +181,6 @@
       isbn: document.getElementById('m-isbn').value.trim(),
       publisher: document.getElementById('m-publisher').value.trim(),
       published_date: document.getElementById('m-year').value.trim(),
-      status: manualStatus,
     };
     const r = await fetch('/api/save/', {
       method: 'POST',

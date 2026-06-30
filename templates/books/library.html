@@ -129,19 +129,6 @@
       <input name="q" value="{{ q }}" placeholder="title or author..." autocomplete="off"
         class="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-ink-400">
     </div>
-    <div class="flex gap-1">
-      <a href="?{% if q %}q={{ q }}&{% endif %}"
-        class="flex-shrink-0 px-3 py-1.5 rounded-t-sm text-xs font-bold transition border border-b-0
-          {% if not status_filter %}bg-[#f4ecd8] border-ink-400/40 relative z-10{% else %}bg-ink-200/40 border-transparent text-ink-600{% endif %}">ALL</a>
-      {% for val, label in status_choices %}
-      <a href="?{% if q %}q={{ q }}&{% endif %}status={{ val }}"
-        class="flex-shrink-0 px-3 py-1.5 rounded-t-sm text-xs font-bold uppercase transition border border-b-0
-          {% if status_filter == val %}bg-[#f4ecd8] border-ink-400/40 relative z-10
-          {% else %}bg-ink-200/40 border-transparent text-ink-600{% endif %}">
-        {{ label }}
-      </a>
-      {% endfor %}
-    </div>
   </form>
 </div>
 
@@ -173,12 +160,6 @@
 
     <div class="spine-edge"></div>
 
-    {% if book.status == 'read' %}
-    <div class="spine-dot" style="background:#4ade80"></div>
-    {% elif book.status == 'reading' %}
-    <div class="spine-dot" style="background:#60a5fa"></div>
-    {% endif %}
-
     <div class="spine-text">
       <span class="spine-title">{{ book.title }}</span>
       {% if book.author %}<span class="spine-author">{{ book.author }}</span>{% endif %}
@@ -196,9 +177,9 @@
     <p class="text-white/30 text-sm font-display">drawer is empty</p>
     <div class="shelf-plank w-full opacity-60"></div>
   </div>
-  <h2 class="text-xl font-display text-ink-800 mb-2">{% if q or status_filter %}No books found{% else %}Start your collection{% endif %}</h2>
-  <p class="text-sm text-ink-500 mb-6">{% if q or status_filter %}Try a different search.{% else %}Scan a barcode or search by title.{% endif %}</p>
-  {% if not q and not status_filter %}
+  <h2 class="text-xl font-display text-ink-800 mb-2">{% if q %}No books found{% else %}Start your collection{% endif %}</h2>
+  <p class="text-sm text-ink-500 mb-6">{% if q %}Try a different search.{% else %}Scan a barcode or search by title.{% endif %}</p>
+  {% if not q %}
   <div class="flex flex-col gap-3 w-full max-w-xs">
     <a href="{% url 'scan' %}" class="flex items-center justify-center gap-2 bg-ink-900 text-ink-50 px-6 py-3.5 rounded-sm font-bold text-sm shadow-card active:scale-95 transition">Scan a Barcode</a>
     <a href="{% url 'add_book' %}" class="flex items-center justify-center gap-2 label-slot text-ink-800 border border-ink-400/40 px-6 py-3.5 rounded-sm font-bold text-sm active:scale-95 transition">Search by Title</a>

@@ -45,22 +45,6 @@
         {% if book.page_count %}
         <p class="text-ink-500 text-xs mt-0.5">{{ book.page_count }} pages</p>
         {% endif %}
-
-        <div class="mt-2">
-          {% if book.status == 'read' %}
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-xs font-bold uppercase tracking-wide border border-green-700 text-green-800">
-            Read
-          </span>
-          {% elif book.status == 'reading' %}
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-xs font-bold uppercase tracking-wide border border-blue-700 text-blue-800">
-            Reading
-          </span>
-          {% else %}
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm text-xs font-bold uppercase tracking-wide border border-ink-500 text-ink-700">
-            Want to Read
-          </span>
-          {% endif %}
-        </div>
       </div>
     </div>
 
@@ -86,25 +70,6 @@
     {% csrf_token %}
     <div class="px-5 pt-5 pb-2">
       <p class="text-xs font-bold text-ink-600 uppercase tracking-wide mb-4">Update Record</p>
-
-      <!-- Status -->
-      <div class="mb-4">
-        <label class="text-xs font-bold text-ink-600 uppercase tracking-wide block mb-2">Status</label>
-        <div class="flex gap-2">
-          {% for val, label in status_choices %}
-          <label class="flex-1">
-            <input type="radio" name="status" value="{{ val }}" {% if book.status == val %}checked{% endif %} class="sr-only peer">
-            <div class="text-center py-2.5 rounded-sm text-xs font-bold uppercase border cursor-pointer transition
-              peer-checked:ring-2 peer-checked:ring-ink-900
-              {% if val == 'read' %}border-green-700 text-green-800 bg-[#f4ecd8]
-              {% elif val == 'reading' %}border-blue-700 text-blue-800 bg-[#f4ecd8]
-              {% else %}border-ink-500 text-ink-700 bg-[#f4ecd8]{% endif %}">
-              {{ label }}
-            </div>
-          </label>
-          {% endfor %}
-        </div>
-      </div>
 
       <!-- Rating -->
       <div class="mb-4">

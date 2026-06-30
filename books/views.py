@@ -35,17 +35,12 @@ def _download_cover(pk, url):
 
 def library(request):
     q = request.GET.get("q", "").strip()
-    status = request.GET.get("status", "")
     books = Book.objects.all()
     if q:
         books = books.filter(Q(title__icontains=q) | Q(author__icontains=q) | Q(isbn__icontains=q))
-    if status:
-        books = books.filter(status=status)
     return render(request, "books/library.html", {
         "books": books,
         "q": q,
-        "status_filter": status,
-        "status_choices": Book.STATUS_CHOICES,
     })
 
 
@@ -97,7 +92,6 @@ def save_book(request):
         description=data.get("description", ""),
         cover_url=data.get("cover_url", ""),
         page_count=data.get("page_count") or None,
-        status=data.get("status", "want"),
     )
     if book.cover_url:
         threading.Thread(target=_download_cover, args=(book.pk, book.cover_url), daemon=True).start()
@@ -121,14 +115,13 @@ def cover_image(request, pk):
 
 def book_detail(request, pk):
     book = get_object_or_404(Book, pk=pk)
-    return render(request, "books/detail.html", {"book": book, "status_choices": Book.STATUS_CHOICES})
+    return render(request, "books/detail.html", {"book": book})
 
 
 @require_POST
 def book_update(request, pk):
     book = get_object_or_404(Book, pk=pk)
     data = request.POST
-    book.status = data.get("status", book.status)
     book.rating = data.get("rating") or None
     book.notes = data.get("notes", book.notes)
     finished = data.get("date_finished", "")
