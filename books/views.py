@@ -45,14 +45,10 @@ def library(request):
             | Q(isbn__icontains=q)
             | Q(description__icontains=q)
         )
-    return render(
-        request,
-        "books/library.html",
-        {
-            "books": books,
-            "q": q,
-        },
-    )
+    context = {"books": books, "q": q}
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return render(request, "books/_shelf.html", context)
+    return render(request, "books/library.html", context)
 
 
 def add_book(request):

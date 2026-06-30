@@ -123,228 +123,210 @@
 
 <!-- Search + filters -->
 <div class="mb-0">
-  <form method="get">
+  <form method="get" id="search-form">
     <div class="label-slot rounded-sm px-3 py-2.5 mb-3 flex items-center gap-2 border border-ink-400/40">
       <span class="text-[11px] uppercase tracking-wide text-ink-500 flex-shrink-0">Search:</span>
-      <input name="q" value="{{ q }}" placeholder="title or author..." autocomplete="off"
+      <input name="q" id="search-input" value="{{ q }}" placeholder="title, author, or description..." autocomplete="off"
         class="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-ink-400">
     </div>
   </form>
 </div>
 
-{% if books %}
-
-<!-- Catalog drawer housing the bookshelf wall -->
-<div class="border border-ink-400/40 rounded-b-sm rounded-tr-sm bg-[#c2ad81] p-3 mb-1" style="box-shadow: 0 6px 0 #8a6c3e, 0 10px 18px rgba(0,0,0,.25);">
-  <div id="bookshelf" class="wall rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,.55)] -mx-1">
-    <div class="h-5"></div>
-    <!-- rows inserted by buildShelf() -->
-  </div>
-  <div class="w-12 h-2.5 rounded-sm mx-auto mt-3" style="background:#5a4326; box-shadow: 0 1px 0 rgba(255,255,255,.15) inset;"></div>
+<div id="shelf-container">
+{% include "books/_shelf.html" %}
 </div>
-
-<p class="text-center text-xs text-ink-600 mt-3 mb-5">{{ books|length }} volume{{ books|length|pluralize }} catalogued</p>
-
-<!-- Hidden spine pool: Django renders all spines here; JS moves them onto shelves -->
-<div id="spine-pool" style="display:none">
-  {% for book in books %}
-  <a href="{% url 'book_detail' book.pk %}"
-     class="spine"
-     style="width:{{ book|spine_width }}px; height:{{ book|spine_height }}px;"
-     data-title="{{ book.title|escapejs }}"
-     data-w="{{ book|spine_width }}">
-
-    {% if book.cover_url %}
-    <img src="{% url 'cover_image' book.pk %}" alt="" class="spine-cover" loading="lazy">
-    {% endif %}
-
-    <div class="spine-edge"></div>
-
-    <div class="spine-text">
-      <span class="spine-title">{{ book.title }}</span>
-      {% if book.author %}<span class="spine-author">{{ book.author }}</span>{% endif %}
-    </div>
-  </a>
-  {% endfor %}
-</div>
-
-{% else %}
-
-<!-- Empty state -->
-<div class="flex flex-col items-center justify-center py-16 text-center mt-1">
-  <div class="wall rounded-3xl w-full py-12 mb-6 flex flex-col items-center gap-3 -mx-1">
-    <div class="shelf-plank w-full opacity-60"></div>
-    <p class="text-white/30 text-sm font-display">drawer is empty</p>
-    <div class="shelf-plank w-full opacity-60"></div>
-  </div>
-  <h2 class="text-xl font-display text-ink-800 mb-2">{% if q %}No books found{% else %}Start your collection{% endif %}</h2>
-  <p class="text-sm text-ink-500 mb-6">{% if q %}Try a different search.{% else %}Scan a barcode or search by title.{% endif %}</p>
-  {% if not q %}
-  <div class="flex flex-col gap-3 w-full max-w-xs">
-    <a href="{% url 'scan' %}" class="flex items-center justify-center gap-2 bg-ink-900 text-ink-50 px-6 py-3.5 rounded-sm font-bold text-sm shadow-card active:scale-95 transition">Scan a Barcode</a>
-    <a href="{% url 'add_book' %}" class="flex items-center justify-center gap-2 label-slot text-ink-800 border border-ink-400/40 px-6 py-3.5 rounded-sm font-bold text-sm active:scale-95 transition">Search by Title</a>
-  </div>
-  {% endif %}
-</div>
-
-{% endif %}
 
 <script>
 // --- Shelf builder: packs spines into rows based on measured width ---
-(function () {
+// Re-run after every render (initial load, resize, and live search swaps).
+var measureCtx = document.createElement('canvas').getContext('2d');
+
+// Fit title font-size so the text length (vertical after writing-mode) stays
+// within the spine's usable height. CSS handles positioning via bottom/left.
+function fitTitle(spine) {
+  var titleEl = spine.querySelector('.spine-title');
+  if (!titleEl) return;
+  var text = (titleEl.textContent || '').trim();
+  if (!text) return;
+
+  var spineH = parseInt(spine.style.height, 10) || 148;
+  var spineW = parseInt(spine.style.width,  10) || 24;
+  var availLen  = spineH - 14;  // max text run (spine height - padding)
+  var maxFontPx = spineW - 4;   // max font-size (limited by spine width)
+
+  var lo = 5.5, hi = maxFontPx, best = lo;
+  for (var i = 0; i < 12; i++) {
+    var mid = (lo + hi) / 2;
+    measureCtx.font = '700 ' + mid + 'px system-ui,-apple-system,sans-serif';
+    var w = measureCtx.measureText(text).width + text.length * mid * 0.04;
+    if (w <= availLen) { best = mid; lo = mid; } else hi = mid;
+  }
+
+  titleEl.style.fontSize = best + 'px';
+}
+
+function buildShelf() {
   var shelf = document.getElementById('bookshelf');
   var pool  = document.getElementById('spine-pool');
   if (!shelf || !pool) return;
 
-  // Canvas for measuring text without touching the DOM
-  var measureCtx = document.createElement('canvas').getContext('2d');
+  var spines = Array.from(pool.children);
+  var available = shelf.offsetWidth - 24; // px-3 = 12px each side
+  var gap = 4;
 
-  // Fit title font-size so the text length (vertical after writing-mode) stays
-  // within the spine's usable height. CSS handles positioning via bottom/left.
-  function fitTitle(spine) {
-    var titleEl = spine.querySelector('.spine-title');
-    if (!titleEl) return;
-    var text = (titleEl.textContent || '').trim();
-    if (!text) return;
-
-    var spineH = parseInt(spine.style.height, 10) || 148;
-    var spineW = parseInt(spine.style.width,  10) || 24;
-    var availLen  = spineH - 14;  // max text run (spine height - padding)
-    var maxFontPx = spineW - 4;   // max font-size (limited by spine width)
-
-    var lo = 5.5, hi = maxFontPx, best = lo;
-    for (var i = 0; i < 12; i++) {
-      var mid = (lo + hi) / 2;
-      measureCtx.font = '700 ' + mid + 'px system-ui,-apple-system,sans-serif';
-      var w = measureCtx.measureText(text).width + text.length * mid * 0.04;
-      if (w <= availLen) { best = mid; lo = mid; } else hi = mid;
+  // Greedy row packing
+  var rows = [];
+  var row = [], rowW = 0;
+  spines.forEach(function (spine) {
+    var w = parseInt(spine.dataset.w, 10) || 24;
+    var needed = row.length ? rowW + gap + w : w;
+    if (row.length > 0 && needed > available) {
+      rows.push(row); row = [spine]; rowW = w;
+    } else {
+      row.push(spine); rowW = needed;
     }
-
-    titleEl.style.fontSize = best + 'px';
-  }
-
-  function build() {
-    var spines = Array.from(pool.children);
-    var available = shelf.offsetWidth - 24; // px-3 = 12px each side
-    var gap = 4;
-
-    // Greedy row packing
-    var rows = [];
-    var row = [], rowW = 0;
-    spines.forEach(function (spine) {
-      var w = parseInt(spine.dataset.w, 10) || 24;
-      var needed = row.length ? rowW + gap + w : w;
-      if (row.length > 0 && needed > available) {
-        rows.push(row); row = [spine]; rowW = w;
-      } else {
-        row.push(spine); rowW = needed;
-      }
-    });
-    if (row.length) rows.push(row);
-
-    // Build DOM
-    rows.forEach(function (rowSpines) {
-      var maxH = rowSpines.reduce(function (m, s) {
-        return Math.max(m, parseInt(s.style.height, 10) || 148);
-      }, 0);
-
-      var rowEl = document.createElement('div');
-      rowEl.className = 'flex items-end px-3';
-      rowEl.style.gap = gap + 'px';
-
-      rowSpines.forEach(function (spine) {
-        fitTitle(spine);
-        rowEl.appendChild(spine);
-      });
-
-      var ghost = document.createElement('div');
-      ghost.className = 'spine-ghost';
-      ghost.style.height = maxH + 'px';
-      rowEl.appendChild(ghost);
-
-      shelf.appendChild(rowEl);
-
-      var plank = document.createElement('div');
-      plank.className = 'shelf-plank';
-      shelf.appendChild(plank);
-
-      var spacer = document.createElement('div');
-      spacer.style.height = '20px';
-      shelf.appendChild(spacer);
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', build);
-  } else {
-    build();
-  }
-
-  var resizeTimer;
-  window.addEventListener('resize', function () {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(function () {
-      shelf.querySelectorAll('.spine').forEach(function (s) { pool.appendChild(s); });
-      while (shelf.children.length > 1) shelf.removeChild(shelf.lastChild);
-      build();
-    }, 250);
   });
-})();
+  if (row.length) rows.push(row);
 
+  // Clear any previously packed rows before rebuilding
+  while (shelf.children.length > 1) shelf.removeChild(shelf.lastChild);
+
+  // Build DOM
+  rows.forEach(function (rowSpines) {
+    var maxH = rowSpines.reduce(function (m, s) {
+      return Math.max(m, parseInt(s.style.height, 10) || 148);
+    }, 0);
+
+    var rowEl = document.createElement('div');
+    rowEl.className = 'flex items-end px-3';
+    rowEl.style.gap = gap + 'px';
+
+    rowSpines.forEach(function (spine) {
+      fitTitle(spine);
+      rowEl.appendChild(spine);
+    });
+
+    var ghost = document.createElement('div');
+    ghost.className = 'spine-ghost';
+    ghost.style.height = maxH + 'px';
+    rowEl.appendChild(ghost);
+
+    shelf.appendChild(rowEl);
+
+    var plank = document.createElement('div');
+    plank.className = 'shelf-plank';
+    shelf.appendChild(plank);
+
+    var spacer = document.createElement('div');
+    spacer.style.height = '20px';
+    shelf.appendChild(spacer);
+  });
+}
+
+function hashColor(str) {
+  var h = 5381;
+  for (var i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return 'hsl(' + (Math.abs(h) % 360) + ',42%,22%)';
+}
+
+function applySpineColor(spine, img) {
+  var title = spine.dataset.title || '';
+  if (!img) { spine.style.background = hashColor(title); return; }
+
+  function extract() {
+    try {
+      var c = document.createElement('canvas');
+      c.width = 4; c.height = 24;
+      var ctx = c.getContext('2d');
+      ctx.drawImage(img,
+        Math.floor(img.naturalWidth  * 0.2), Math.floor(img.naturalHeight * 0.2),
+        Math.floor(img.naturalWidth  * 0.6), Math.floor(img.naturalHeight * 0.6),
+        0, 0, 4, 24
+      );
+      var px = ctx.getImageData(0, 0, 4, 24).data;
+      var r = 0, g = 0, b = 0, n = px.length / 4;
+      for (var i = 0; i < px.length; i += 4) { r += px[i]; g += px[i+1]; b += px[i+2]; }
+      var f = 0.62;
+      spine.style.background =
+        'rgb(' + Math.round(r/n*f) + ',' + Math.round(g/n*f) + ',' + Math.round(b/n*f) + ')';
+    } catch (e) {
+      spine.style.background = hashColor(title);
+    }
+  }
+
+  if (img.complete && img.naturalWidth > 0) extract();
+  else {
+    img.addEventListener('load', extract);
+    img.addEventListener('error', function () { spine.style.background = hashColor(title); });
+  }
+}
+
+function colorAllSpines() {
+  document.querySelectorAll('#spine-pool .spine, #bookshelf .spine').forEach(function (spine) {
+    applySpineColor(spine, spine.querySelector('.spine-cover'));
+  });
+}
+
+function refreshShelf() {
+  buildShelf();
+  colorAllSpines();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', refreshShelf);
+} else {
+  refreshShelf();
+}
+
+var resizeTimer;
+window.addEventListener('resize', function () {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(buildShelf, 250);
+});
+
+// --- Live search: re-fetch the shelf on every keystroke, debounced ---
 (function () {
-  function hashColor(str) {
-    var h = 5381;
-    for (var i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
-    return 'hsl(' + (Math.abs(h) % 360) + ',42%,22%)';
-  }
+  var input = document.getElementById('search-input');
+  var form = document.getElementById('search-form');
+  var container = document.getElementById('shelf-container');
+  if (!input || !container) return;
 
-  function applyColor(spine, img) {
-    var title = spine.dataset.title || '';
-    if (!img) { spine.style.background = hashColor(title); return; }
+  var debounceTimer, currentRequest;
 
-    function extract() {
-      try {
-        var c = document.createElement('canvas');
-        c.width = 4; c.height = 24;
-        var ctx = c.getContext('2d');
-        ctx.drawImage(img,
-          Math.floor(img.naturalWidth  * 0.2), Math.floor(img.naturalHeight * 0.2),
-          Math.floor(img.naturalWidth  * 0.6), Math.floor(img.naturalHeight * 0.6),
-          0, 0, 4, 24
-        );
-        var px = ctx.getImageData(0, 0, 4, 24).data;
-        var r = 0, g = 0, b = 0, n = px.length / 4;
-        for (var i = 0; i < px.length; i += 4) { r += px[i]; g += px[i+1]; b += px[i+2]; }
-        var f = 0.62;
-        spine.style.background =
-          'rgb(' + Math.round(r/n*f) + ',' + Math.round(g/n*f) + ',' + Math.round(b/n*f) + ')';
-      } catch (e) {
-        spine.style.background = hashColor(title);
-      }
-    }
+  function runSearch() {
+    var q = input.value.trim();
+    var url = new URL(window.location.href);
+    if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
+    window.history.replaceState({}, '', url);
 
-    if (img.complete && img.naturalWidth > 0) extract();
-    else {
-      img.addEventListener('load', extract);
-      img.addEventListener('error', function () { spine.style.background = hashColor(title); });
-    }
-  }
+    if (currentRequest) currentRequest.abort();
+    var controller = new AbortController();
+    currentRequest = controller;
 
-  function processSpine(spine) {
-    applyColor(spine, spine.querySelector('.spine-cover'));
-  }
-
-  document.querySelectorAll('#spine-pool .spine, #bookshelf .spine').forEach(processSpine);
-
-  var mo = new MutationObserver(function (mutations) {
-    mutations.forEach(function (m) {
-      m.addedNodes.forEach(function (node) {
-        if (node.classList && node.classList.contains('spine')) processSpine(node);
-        if (node.querySelectorAll) node.querySelectorAll('.spine').forEach(processSpine);
+    fetch(url.pathname + url.search, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      signal: controller.signal,
+    })
+      .then(function (resp) { return resp.text(); })
+      .then(function (html) {
+        container.innerHTML = html;
+        refreshShelf();
+      })
+      .catch(function (err) {
+        if (err.name !== 'AbortError') throw err;
       });
-    });
+  }
+
+  input.addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runSearch, 200);
   });
-  mo.observe(document.body, { childList: true, subtree: true });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearTimeout(debounceTimer);
+    runSearch();
+  });
 })();
 </script>
 {% endblock %}
