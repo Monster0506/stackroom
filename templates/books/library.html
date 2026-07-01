@@ -376,6 +376,45 @@ window.addEventListener('resize', function () {
   }, 250);
 });
 
+// --- Click a case name to rename it inline ---
+document.addEventListener('click', function (e) {
+  var el = e.target.closest('.case-name');
+  if (!el || el.querySelector('input')) return;
+
+  var pk = el.dataset.casePk;
+  var current = el.textContent.trim();
+  el.textContent = '';
+
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.value = current;
+  input.className = 'font-display text-base text-ink-900 bg-transparent border-b border-ink-400/60 focus:outline-none w-full';
+  el.appendChild(input);
+  input.focus();
+  input.select();
+
+  var done = false;
+  function commit() {
+    if (done) return;
+    done = true;
+    var name = input.value.trim() || current;
+    el.textContent = name;
+    if (name !== current) {
+      fetch('/cases/' + pk + '/rename/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ name: name }),
+      });
+    }
+  }
+
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { input.blur(); }
+    else if (e.key === 'Escape') { done = true; el.textContent = current; }
+  });
+});
+
 // --- Live search: re-fetch the shelf on every keystroke, debounced ---
 (function () {
   var input = document.getElementById('search-input');

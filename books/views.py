@@ -232,6 +232,16 @@ def bookcase_add(request):
 
 
 @require_POST
+def bookcase_rename(request, pk):
+    case = get_object_or_404(Bookcase, pk=pk)
+    name = json.loads(request.body).get("name", "").strip()
+    if name:
+        case.name = name
+        case.save(update_fields=["name"])
+    return JsonResponse({"name": case.name})
+
+
+@require_POST
 def bookcase_delete(request, pk):
     case = get_object_or_404(Bookcase, pk=pk)
     if Book.objects.filter(shelf__bookcase=case).exists():
