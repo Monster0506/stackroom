@@ -181,20 +181,23 @@ function buildShelf(shelf, pool) {
   var spines = Array.from(pool.children);
 
   // Clear any previously built row before rebuilding.
-  while (shelf.children.length > 1) shelf.removeChild(shelf.lastChild);
-  if (!spines.length) return;
+  while (shelf.children.length > 0) shelf.removeChild(shelf.lastChild);
 
   // A shelf is exactly one row. It never wraps into more rows - if it's
   // full, it widens (the shelf-el's own w-max sizing handles that) rather
   // than growing another plank. Multiple physical shelves are multiple
   // Shelf records, not multiple rows within one.
+  //
+  // A minimum height floor keeps an empty shelf's row a real, visible,
+  // droppable rectangle instead of collapsing to zero height.
   var maxH = spines.reduce(function (m, s) {
     return Math.max(m, parseInt(s.style.height, 10) || 148);
-  }, 0);
+  }, 60);
 
   var rowEl = document.createElement('div');
   rowEl.className = 'flex items-end px-3';
   rowEl.style.gap = '4px';
+  rowEl.style.minHeight = maxH + 'px';
 
   spines.forEach(function (spine) {
     fitTitle(spine);
