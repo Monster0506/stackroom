@@ -170,6 +170,10 @@ function buildShelf() {
   var pool  = document.getElementById('spine-pool');
   if (!shelf || !pool) return;
 
+  // Spines may currently be sitting in shelf rows (from a prior build) or
+  // still in the pool (first run) - gather them in their current visual
+  // order before repacking.
+  shelf.querySelectorAll('.spine').forEach(function (s) { pool.appendChild(s); });
   var spines = Array.from(pool.children);
   var available = shelf.offsetWidth - 24; // px-3 = 12px each side
   var gap = 4;
@@ -198,7 +202,7 @@ function buildShelf() {
     }, 0);
 
     var rowEl = document.createElement('div');
-    rowEl.className = 'flex items-end px-3';
+    rowEl.className = 'flex items-end px-3 flex-wrap';
     rowEl.style.gap = gap + 'px';
 
     rowSpines.forEach(function (spine) {
@@ -290,16 +294,10 @@ function persistOrder(order) {
   }, 400);
 }
 
-function rebuildFromCurrentOrder() {
-  var pool = document.getElementById('spine-pool');
-  var shelf = document.getElementById('bookshelf');
-  if (!pool || !shelf) return;
-  var spinesInOrder = Array.from(shelf.querySelectorAll('.spine'));
-  spinesInOrder.forEach(function (s) { pool.appendChild(s); });
-  buildShelf();
-  colorAllSpines();
-  attachDragHandlers();
-  persistOrder(spinesInOrder.map(function (s) { return s.dataset.pk; }));
+function currentShelfOrder() {
+  return Array.from(document.querySelectorAll('#bookshelf .spine')).map(function (s) {
+    return s.dataset.pk;
+  });
 }
 
 function attachDragHandlers() {
@@ -325,8 +323,10 @@ function attachDragHandlers() {
       if (!dragged) return;
       var rect = spine.getBoundingClientRect();
       var before = (e.clientX - rect.left) < rect.width / 2;
+      // Move only the dragged spine in place - no repacking, so the rest
+      // of the shelf stays exactly where it was.
       spine.parentNode.insertBefore(dragged, before ? spine : spine.nextSibling);
-      rebuildFromCurrentOrder();
+      persistOrder(currentShelfOrder());
     });
   });
 }
