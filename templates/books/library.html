@@ -141,7 +141,7 @@
 </div>
 
 <script>
-// --- Shelf builder: packs spines into rows based on measured width ---
+// --- Shelf builder: lays a shelf's spines out in its single row ---
 // Re-run after every render (initial load, resize, and live search swaps).
 var measureCtx = document.createElement('canvas').getContext('2d');
 
@@ -172,61 +172,47 @@ function fitTitle(spine) {
 function buildShelf(shelf, pool) {
   if (!shelf || !pool) return;
 
-  // Spines may currently be sitting in shelf rows (from a prior build) or
-  // still in the pool (first run) - gather them in their current visual
-  // order before repacking.
+  // Spines may currently be sitting in the shelf's row (from a prior build)
+  // or still in the pool (first run) - gather them in their current visual
+  // order before rebuilding.
   shelf.querySelectorAll('.spine').forEach(function (s) { pool.appendChild(s); });
   var spines = Array.from(pool.children);
-  var available = shelf.offsetWidth - 24; // px-3 = 12px each side
-  var gap = 4;
 
-  // Greedy row packing
-  var rows = [];
-  var row = [], rowW = 0;
-  spines.forEach(function (spine) {
-    var w = parseInt(spine.dataset.w, 10) || 24;
-    var needed = row.length ? rowW + gap + w : w;
-    if (row.length > 0 && needed > available) {
-      rows.push(row); row = [spine]; rowW = w;
-    } else {
-      row.push(spine); rowW = needed;
-    }
-  });
-  if (row.length) rows.push(row);
-
-  // Clear any previously packed rows before rebuilding
+  // Clear any previously built row before rebuilding.
   while (shelf.children.length > 1) shelf.removeChild(shelf.lastChild);
+  if (!spines.length) return;
 
-  // Build DOM
-  rows.forEach(function (rowSpines) {
-    var maxH = rowSpines.reduce(function (m, s) {
-      return Math.max(m, parseInt(s.style.height, 10) || 148);
-    }, 0);
+  // A shelf is exactly one row. It never wraps into more rows - if it's
+  // full, it widens (the shelf-el's own w-max sizing handles that) rather
+  // than growing another plank. Multiple physical shelves are multiple
+  // Shelf records, not multiple rows within one.
+  var maxH = spines.reduce(function (m, s) {
+    return Math.max(m, parseInt(s.style.height, 10) || 148);
+  }, 0);
 
-    var rowEl = document.createElement('div');
-    rowEl.className = 'flex items-end px-3';
-    rowEl.style.gap = gap + 'px';
+  var rowEl = document.createElement('div');
+  rowEl.className = 'flex items-end px-3';
+  rowEl.style.gap = '4px';
 
-    rowSpines.forEach(function (spine) {
-      fitTitle(spine);
-      rowEl.appendChild(spine);
-    });
-
-    var ghost = document.createElement('div');
-    ghost.className = 'spine-ghost';
-    ghost.style.height = maxH + 'px';
-    rowEl.appendChild(ghost);
-
-    shelf.appendChild(rowEl);
-
-    var plank = document.createElement('div');
-    plank.className = 'shelf-plank';
-    shelf.appendChild(plank);
-
-    var spacer = document.createElement('div');
-    spacer.style.height = '20px';
-    shelf.appendChild(spacer);
+  spines.forEach(function (spine) {
+    fitTitle(spine);
+    rowEl.appendChild(spine);
   });
+
+  var ghost = document.createElement('div');
+  ghost.className = 'spine-ghost';
+  ghost.style.height = maxH + 'px';
+  rowEl.appendChild(ghost);
+
+  shelf.appendChild(rowEl);
+
+  var plank = document.createElement('div');
+  plank.className = 'shelf-plank';
+  shelf.appendChild(plank);
+
+  var spacer = document.createElement('div');
+  spacer.style.height = '20px';
+  shelf.appendChild(spacer);
 }
 
 function hashColor(str) {

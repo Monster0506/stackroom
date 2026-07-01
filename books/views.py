@@ -47,8 +47,15 @@ def library(request):
             return render(request, "books/_search_results.html", context)
         return render(request, "books/library.html", context)
 
-    bookcases = Bookcase.objects.prefetch_related(
-        Prefetch("shelves", queryset=Shelf.objects.prefetch_related("books"))
+    bookcases = Bookcase.objects.annotate(
+        book_count=Count("shelves__books")
+    ).prefetch_related(
+        Prefetch(
+            "shelves",
+            queryset=Shelf.objects.annotate(book_count=Count("books")).prefetch_related(
+                "books"
+            ),
+        )
     )
     context = {"q": q, "bookcases": bookcases}
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":

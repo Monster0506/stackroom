@@ -1,5 +1,13 @@
 {% if books %}
-{% include "books/_shelf_display.html" with shelf_key="search" books=books drag_enabled=False %}
+
+<div class="border border-ink-400/40 rounded-b-sm rounded-tr-sm bg-[#c2ad81] p-3 mb-1 overflow-x-auto" style="box-shadow: 0 6px 0 #8a6c3e, 0 10px 18px rgba(0,0,0,.25);">
+  <div class="wall rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,.55)] -mx-1 min-w-full w-max">
+    <div class="h-5"></div>
+    {% include "books/_shelf_row.html" with shelf_key="search" books=books drag_enabled=False %}
+  </div>
+  <div class="w-12 h-2.5 rounded-sm mx-auto mt-3" style="background:#5a4326; box-shadow: 0 1px 0 rgba(255,255,255,.15) inset;"></div>
+</div>
+
 {% else %}
 
 <!-- Empty state -->

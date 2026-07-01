@@ -12,27 +12,37 @@
           {% csrf_token %}
           <button type="submit" class="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-sm label-slot border border-ink-400/40 text-ink-700 active:scale-95 transition">+ Shelf</button>
         </form>
-        <form method="post" action="{% url 'bookcase_delete' case.pk %}" onsubmit="return confirm('Delete {{ case.name|escapejs }}? Only works if every shelf is empty.')">
+        {% if not case.book_count %}
+        <form method="post" action="{% url 'bookcase_delete' case.pk %}" onsubmit="return confirm('Delete {{ case.name|escapejs }}?')">
           {% csrf_token %}
           <button type="submit" class="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-sm border border-amber-700 text-amber-800 active:scale-95 transition">Delete Case</button>
         </form>
+        {% endif %}
       </div>
     </div>
 
-    {% for shelf in case.shelves.all %}
-    <div class="mb-4">
-      <div class="flex items-center justify-between mb-1.5">
-        <span class="text-[11px] uppercase tracking-wide text-ink-500 font-bold">{{ shelf.name }}</span>
-        <form method="post" action="{% url 'shelf_delete' shelf.pk %}" onsubmit="return confirm('Delete {{ shelf.name|escapejs }}? Only works if the shelf is empty.')">
-          {% csrf_token %}
-          <button type="submit" class="text-[10px] text-ink-500 underline">Delete Shelf</button>
-        </form>
+    {% if case.shelves.all %}
+    <div class="border border-ink-400/40 rounded-b-sm rounded-tr-sm bg-[#c2ad81] p-3 overflow-x-auto" style="box-shadow: 0 6px 0 #8a6c3e, 0 10px 18px rgba(0,0,0,.25);">
+      <div class="wall rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,.55)] -mx-1 min-w-full w-max">
+        <div class="h-3"></div>
+        {% for shelf in case.shelves.all %}
+        <div class="flex items-center justify-between px-3">
+          <span class="text-[9px] uppercase tracking-wide text-white/45 font-bold">{{ shelf.name }}</span>
+          {% if not shelf.book_count %}
+          <form method="post" action="{% url 'shelf_delete' shelf.pk %}" onsubmit="return confirm('Delete {{ shelf.name|escapejs }}?')">
+            {% csrf_token %}
+            <button type="submit" class="text-[9px] text-white/45 underline">Delete Shelf</button>
+          </form>
+          {% endif %}
+        </div>
+        {% include "books/_shelf_row.html" with shelf_key=shelf.pk books=shelf.books.all drag_enabled=True %}
+        {% endfor %}
       </div>
-      {% include "books/_shelf_display.html" with shelf_key=shelf.pk books=shelf.books.all drag_enabled=True %}
+      <div class="w-12 h-2.5 rounded-sm mx-auto mt-3" style="background:#5a4326; box-shadow: 0 1px 0 rgba(255,255,255,.15) inset;"></div>
     </div>
-    {% empty %}
+    {% else %}
     <p class="text-xs text-ink-500 italic mb-2">No shelves yet.</p>
-    {% endfor %}
+    {% endif %}
   </div>
   {% endfor %}
 </div>
