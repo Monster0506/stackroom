@@ -1,0 +1,16 @@
+{% if books %}
+{% include "books/_shelf_display.html" with shelf_key="search" books=books drag_enabled=False %}
+{% else %}
+
+<!-- Empty state -->
+<div class="flex flex-col items-center justify-center py-16 text-center mt-1">
+  <div class="wall rounded-3xl w-full py-12 mb-6 flex flex-col items-center gap-3 -mx-1">
+    <div class="shelf-plank w-full opacity-60"></div>
+    <p class="text-white/30 text-sm font-display">drawer is empty</p>
+    <div class="shelf-plank w-full opacity-60"></div>
+  </div>
+  <h2 class="text-xl font-display text-ink-800 mb-2">No books found</h2>
+  <p class="text-sm text-ink-500 mb-6">Try a different search.</p>
+</div>
+
+{% endif %}

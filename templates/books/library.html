@@ -133,7 +133,11 @@
 </div>
 
 <div id="shelf-container">
-{% include "books/_shelf.html" %}
+{% if q %}
+{% include "books/_search_results.html" %}
+{% else %}
+{% include "books/_bookcases.html" %}
+{% endif %}
 </div>
 
 <script>
@@ -165,9 +169,7 @@ function fitTitle(spine) {
   titleEl.style.fontSize = best + 'px';
 }
 
-function buildShelf() {
-  var shelf = document.getElementById('bookshelf');
-  var pool  = document.getElementById('spine-pool');
+function buildShelf(shelf, pool) {
   if (!shelf || !pool) return;
 
   // Spines may currently be sitting in shelf rows (from a prior build) or
@@ -266,15 +268,9 @@ function applySpineColor(spine, img) {
 }
 
 function colorAllSpines() {
-  document.querySelectorAll('#spine-pool .spine, #bookshelf .spine').forEach(function (spine) {
+  document.querySelectorAll('.spine').forEach(function (spine) {
     applySpineColor(spine, spine.querySelector('.spine-cover'));
   });
-}
-
-// --- Drag-to-reorder: only active when the library isn't filtered by search ---
-function dragAllowed() {
-  var input = document.getElementById('search-input');
-  return !input || input.value.trim() === '';
 }
 
 function getCookie(name) {
@@ -282,57 +278,93 @@ function getCookie(name) {
   return v ? v[2] : null;
 }
 
-var reorderTimer;
-function persistOrder(order) {
-  clearTimeout(reorderTimer);
-  reorderTimer = setTimeout(function () {
-    fetch('/api/reorder/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-      body: JSON.stringify({ order: order }),
-    });
-  }, 400);
-}
-
-function currentShelfOrder() {
-  return Array.from(document.querySelectorAll('#bookshelf .spine')).map(function (s) {
+function shelfOrder(shelfEl) {
+  return Array.from(shelfEl.querySelectorAll('.spine')).map(function (s) {
     return s.dataset.pk;
   });
 }
 
+var moveTimer;
+function persistMove(bookPk, shelfPk, order) {
+  clearTimeout(moveTimer);
+  moveTimer = setTimeout(function () {
+    fetch('/api/move/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify({ book: bookPk, shelf: shelfPk, order: order }),
+    });
+  }, 400);
+}
+
+// --- Drag-to-move: reorder within a shelf, or move a book to a different
+// shelf entirely. Only active on shelf instances with data-drag="1"
+// (disabled on the flat search-results view).
 function attachDragHandlers() {
-  if (!dragAllowed()) return;
-  document.querySelectorAll('#bookshelf .spine').forEach(function (spine) {
-    spine.setAttribute('draggable', 'true');
-    spine.addEventListener('dragstart', function (e) {
-      spine.classList.add('opacity-40');
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', spine.dataset.pk);
+  document.querySelectorAll('.shelf-instance[data-drag="1"]').forEach(function (inst) {
+    var shelfEl = inst.querySelector('.shelf-el');
+    var shelfPk = inst.dataset.shelfPk;
+    if (!shelfEl) return;
+
+    shelfEl.querySelectorAll('.spine').forEach(function (spine) {
+      spine.setAttribute('draggable', 'true');
+      spine.addEventListener('dragstart', function (e) {
+        spine.classList.add('opacity-40');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', spine.dataset.pk);
+      });
+      spine.addEventListener('dragend', function () {
+        spine.classList.remove('opacity-40');
+      });
+      spine.addEventListener('dragover', function (e) {
+        e.preventDefault();
+      });
+      spine.addEventListener('drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var draggedPk = e.dataTransfer.getData('text/plain');
+        if (!draggedPk || draggedPk === spine.dataset.pk) return;
+        var dragged = document.querySelector('.spine[data-pk="' + draggedPk + '"]');
+        if (!dragged) return;
+        var rect = spine.getBoundingClientRect();
+        var before = (e.clientX - rect.left) < rect.width / 2;
+        // Move only the dragged spine in place - no repacking, so the rest
+        // of the shelf (and any other shelf) stays exactly where it was.
+        spine.parentNode.insertBefore(dragged, before ? spine : spine.nextSibling);
+        persistMove(draggedPk, shelfPk, shelfOrder(shelfEl));
+      });
     });
-    spine.addEventListener('dragend', function () {
-      spine.classList.remove('opacity-40');
-    });
-    spine.addEventListener('dragover', function (e) {
+
+    // The shelf background itself is a drop target too, for dropping past
+    // the last spine in a row, or onto a currently-empty shelf.
+    shelfEl.addEventListener('dragover', function (e) {
       e.preventDefault();
     });
-    spine.addEventListener('drop', function (e) {
+    shelfEl.addEventListener('drop', function (e) {
       e.preventDefault();
       var draggedPk = e.dataTransfer.getData('text/plain');
-      if (!draggedPk || draggedPk === spine.dataset.pk) return;
+      if (!draggedPk) return;
       var dragged = document.querySelector('.spine[data-pk="' + draggedPk + '"]');
       if (!dragged) return;
-      var rect = spine.getBoundingClientRect();
-      var before = (e.clientX - rect.left) < rect.width / 2;
-      // Move only the dragged spine in place - no repacking, so the rest
-      // of the shelf stays exactly where it was.
-      spine.parentNode.insertBefore(dragged, before ? spine : spine.nextSibling);
-      persistOrder(currentShelfOrder());
+      var existing = shelfEl.querySelectorAll('.spine');
+      if (existing.length === 0) {
+        // Shelf has nothing on it - a fresh build is safe (nothing to disturb).
+        var pool = inst.querySelector('.spine-pool-el');
+        pool.appendChild(dragged);
+        buildShelf(shelfEl, pool);
+      } else {
+        var last = existing[existing.length - 1];
+        if (last === dragged) return;
+        last.parentNode.insertBefore(dragged, last.nextSibling);
+      }
+      persistMove(draggedPk, shelfPk, shelfOrder(shelfEl));
     });
   });
 }
 
 function refreshShelf() {
-  buildShelf();
+  document.querySelectorAll('.shelf-instance').forEach(function (inst) {
+    buildShelf(inst.querySelector('.shelf-el'), inst.querySelector('.spine-pool-el'));
+  });
   colorAllSpines();
   attachDragHandlers();
 }
@@ -346,7 +378,11 @@ if (document.readyState === 'loading') {
 var resizeTimer;
 window.addEventListener('resize', function () {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(buildShelf, 250);
+  resizeTimer = setTimeout(function () {
+    document.querySelectorAll('.shelf-instance').forEach(function (inst) {
+      buildShelf(inst.querySelector('.shelf-el'), inst.querySelector('.spine-pool-el'));
+    });
+  }, 250);
 });
 
 // --- Live search: re-fetch the shelf on every keystroke, debounced ---

@@ -1,0 +1,44 @@
+{% load book_filters %}
+<div class="shelf-instance" data-shelf-pk="{{ shelf_key }}" data-drag="{% if drag_enabled %}1{% else %}0{% endif %}">
+
+  <div class="border border-ink-400/40 rounded-b-sm rounded-tr-sm bg-[#c2ad81] p-3 mb-1 overflow-x-auto" style="box-shadow: 0 6px 0 #8a6c3e, 0 10px 18px rgba(0,0,0,.25);">
+    <div class="shelf-el wall rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,.55)] -mx-1 min-w-full w-max">
+      <div class="h-5"></div>
+      <!-- rows inserted by buildShelf() -->
+    </div>
+    <div class="w-12 h-2.5 rounded-sm mx-auto mt-3" style="background:#5a4326; box-shadow: 0 1px 0 rgba(255,255,255,.15) inset;"></div>
+  </div>
+
+  {% if books %}
+  <p class="text-center text-xs text-ink-600 mt-1 mb-3">
+    {{ books|length }} volume{{ books|length|pluralize }}
+    {% if drag_enabled %}<span class="text-ink-500">- drag a spine to reorder or move shelves</span>{% endif %}
+  </p>
+  {% else %}
+  <p class="text-center text-xs text-ink-500 mt-1 mb-3 italic">empty shelf{% if drag_enabled %} - drag a book here{% endif %}</p>
+  {% endif %}
+
+  <!-- Hidden spine pool: Django renders all spines here; JS moves them onto the shelf -->
+  <div class="spine-pool-el" style="display:none">
+    {% for book in books %}
+    <a href="{% url 'book_detail' book.pk %}"
+       class="spine"
+       style="width:{{ book|spine_width }}px; height:{{ book|spine_height }}px;"
+       data-title="{{ book.title|escapejs }}"
+       data-w="{{ book|spine_width }}"
+       data-pk="{{ book.pk }}">
+
+      {% if book.cover_url %}
+      <img src="{% url 'cover_image' book.pk %}" alt="" class="spine-cover" loading="lazy">
+      {% endif %}
+
+      <div class="spine-edge"></div>
+
+      <div class="spine-text">
+        <span class="spine-title">{{ book.title }}</span>
+        {% if book.author %}<span class="spine-author">{{ book.author }}</span>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
