@@ -224,9 +224,10 @@ def book_delete(request, pk):
 @require_POST
 def bookcase_add(request):
     next_position = _next_position(Bookcase.objects)
-    Bookcase.objects.create(
+    case = Bookcase.objects.create(
         name=f"Case {Bookcase.objects.count() + 1}", position=next_position
     )
+    Shelf.objects.create(bookcase=case, name="Shelf 1", position=0)
     return redirect("library")
 
 
