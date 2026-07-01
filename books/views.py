@@ -3,9 +3,11 @@ from django.http import JsonResponse, FileResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, Max, Prefetch
+from functools import wraps
 import json
 import threading
 import urllib.request
@@ -16,6 +18,19 @@ from .lookup import lookup_isbn, lookup_title_author
 from .search import fuzzy_search
 
 COVERS_DIR = Path(settings.BASE_DIR) / "covers"
+
+
+def login_required_api(view_func):
+    """Like login_required, but for fetch()-based endpoints where a redirect
+    to the login page isn't useful - callers expect JSON back."""
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Login required"}, status=403)
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
 
 
 def _download_cover(pk, url):
@@ -122,6 +137,7 @@ def _landing_shelf():
     )
 
 
+@login_required_api
 @require_POST
 def save_book(request):
     data = json.loads(request.body)
@@ -173,6 +189,7 @@ def book_detail(request, pk):
     return render(request, "books/detail.html", {"book": book})
 
 
+@login_required
 @require_POST
 def book_update(request, pk):
     book = get_object_or_404(Book, pk=pk)
@@ -198,6 +215,7 @@ def book_update(request, pk):
     return redirect("book_detail", pk=pk)
 
 
+@login_required_api
 @require_POST
 def move_book(request):
     """Persist a drag-and-drop move: the book's new shelf, and the full
@@ -213,6 +231,7 @@ def move_book(request):
     return JsonResponse({"ok": True})
 
 
+@login_required
 @require_POST
 def book_delete(request, pk):
     book = get_object_or_404(Book, pk=pk)
@@ -221,6 +240,7 @@ def book_delete(request, pk):
     return redirect("library")
 
 
+@login_required
 @require_POST
 def bookcase_add(request):
     next_position = _next_position(Bookcase.objects)
@@ -231,6 +251,7 @@ def bookcase_add(request):
     return redirect("library")
 
 
+@login_required_api
 @require_POST
 def bookcase_rename(request, pk):
     case = get_object_or_404(Bookcase, pk=pk)
@@ -241,6 +262,7 @@ def bookcase_rename(request, pk):
     return JsonResponse({"name": case.name})
 
 
+@login_required
 @require_POST
 def bookcase_delete(request, pk):
     case = get_object_or_404(Bookcase, pk=pk)
@@ -254,6 +276,7 @@ def bookcase_delete(request, pk):
     return redirect("library")
 
 
+@login_required
 @require_POST
 def shelf_add(request, pk):
     case = get_object_or_404(Bookcase, pk=pk)
@@ -264,6 +287,7 @@ def shelf_add(request, pk):
     return redirect("library")
 
 
+@login_required
 @require_POST
 def shelf_delete(request, pk):
     shelf = get_object_or_404(Shelf, pk=pk)
