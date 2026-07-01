@@ -4,12 +4,7 @@
     <!-- row inserted by buildShelf() -->
   </div>
 
-  {% if books %}
-  <p class="text-center text-[10px] text-white/40 -mt-0.5 mb-1.5">
-    {{ books|length }} volume{{ books|length|pluralize }}
-    {% if drag_enabled %}<span class="text-white/25">- drag a spine to reorder or move shelves</span>{% endif %}
-  </p>
-  {% else %}
+  {% if not books %}
   <p class="text-center text-[10px] text-white/30 -mt-0.5 mb-1.5 italic">empty{% if drag_enabled %} - drag a book here{% endif %}</p>
   {% endif %}
 
