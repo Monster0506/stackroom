@@ -4,7 +4,6 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
 from django.conf import settings
-from django.db.models import Q
 import json
 import threading
 import urllib.request
@@ -12,6 +11,7 @@ from pathlib import Path
 
 from .models import Book
 from .lookup import lookup_isbn, lookup_title_author
+from .search import fuzzy_search
 
 COVERS_DIR = Path(settings.BASE_DIR) / "covers"
 
@@ -39,12 +39,7 @@ def library(request):
     q = request.GET.get("q", "").strip()
     books = Book.objects.all()
     if q:
-        books = books.filter(
-            Q(title__icontains=q)
-            | Q(author__icontains=q)
-            | Q(isbn__icontains=q)
-            | Q(description__icontains=q)
-        )
+        books = fuzzy_search(books, q)
     context = {"books": books, "q": q}
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return render(request, "books/_shelf.html", context)
