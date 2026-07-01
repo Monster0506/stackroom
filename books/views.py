@@ -126,6 +126,18 @@ def book_detail(request, pk):
 def book_update(request, pk):
     book = get_object_or_404(Book, pk=pk)
     data = request.POST
+
+    title = data.get("title", "").strip()
+    if title:
+        book.title = title
+    book.author = data.get("author", book.author).strip()
+    book.isbn = data.get("isbn", book.isbn).strip()
+    book.publisher = data.get("publisher", book.publisher).strip()
+    book.published_date = data.get("published_date", book.published_date).strip()
+    page_count = data.get("page_count", "").strip()
+    book.page_count = int(page_count) if page_count.isdigit() else None
+    book.description = data.get("description", book.description).strip()
+
     book.rating = data.get("rating") or None
     book.notes = data.get("notes", book.notes)
     finished = data.get("date_finished", "")

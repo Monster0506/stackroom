@@ -71,6 +71,34 @@
     <div class="px-5 pt-5 pb-2">
       <p class="text-xs font-bold text-ink-600 uppercase tracking-wide mb-4">Update Record</p>
 
+      <!-- Edit details -->
+      <div class="mb-4">
+        <button type="button" onclick="toggleEdit()" class="w-full flex items-center justify-between text-left">
+          <label class="text-xs font-bold text-ink-600 uppercase tracking-wide">Edit details</label>
+          <svg id="edit-chevron" class="w-4 h-4 text-ink-500 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+          </svg>
+        </button>
+        <div id="edit-body" class="hidden flex flex-col gap-3 mt-3">
+          <input name="title" type="text" placeholder="Title *" value="{{ book.title }}"
+            class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+          <input name="author" type="text" placeholder="Author" value="{{ book.author }}"
+            class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+          <input name="isbn" type="text" placeholder="ISBN" value="{{ book.isbn }}" inputmode="numeric"
+            class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+          <div class="grid grid-cols-2 gap-3">
+            <input name="publisher" type="text" placeholder="Publisher" value="{{ book.publisher }}"
+              class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+            <input name="published_date" type="text" placeholder="Year" value="{{ book.published_date }}"
+              class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+          </div>
+          <input name="page_count" type="number" min="0" placeholder="Page count" value="{{ book.page_count|default:'' }}"
+            class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 transition">
+          <textarea name="description" rows="3" placeholder="Description"
+            class="w-full label-slot border border-ink-400/40 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-900 resize-none">{{ book.description }}</textarea>
+        </div>
+      </div>
+
       <!-- Rating -->
       <div class="mb-4">
         <label class="text-xs font-bold text-ink-600 uppercase tracking-wide block mb-2">Rating</label>
@@ -112,6 +140,11 @@
 </div>
 
 <script>
+  function toggleEdit() {
+    document.getElementById('edit-body').classList.toggle('hidden');
+    document.getElementById('edit-chevron').classList.toggle('rotate-180');
+  }
+
   function setRating(n) {
     document.getElementById('rating-input').value = n || '';
     document.querySelectorAll('.star-btn').forEach(btn => {
