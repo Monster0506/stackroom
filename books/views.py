@@ -3,6 +3,7 @@ from django.http import JsonResponse, FileResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.db import transaction
@@ -80,6 +81,12 @@ def library(request):
 
 def add_book(request):
     return render(request, "books/add.html")
+
+
+@require_POST
+def logout_view(request):
+    logout(request)
+    return redirect("library")
 
 
 @ensure_csrf_cookie
