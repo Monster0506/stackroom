@@ -267,9 +267,74 @@ function colorAllSpines() {
   });
 }
 
+// --- Drag-to-reorder: only active when the library isn't filtered by search ---
+function dragAllowed() {
+  var input = document.getElementById('search-input');
+  return !input || input.value.trim() === '';
+}
+
+function getCookie(name) {
+  var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : null;
+}
+
+var reorderTimer;
+function persistOrder(order) {
+  clearTimeout(reorderTimer);
+  reorderTimer = setTimeout(function () {
+    fetch('/api/reorder/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify({ order: order }),
+    });
+  }, 400);
+}
+
+function rebuildFromCurrentOrder() {
+  var pool = document.getElementById('spine-pool');
+  var shelf = document.getElementById('bookshelf');
+  if (!pool || !shelf) return;
+  var spinesInOrder = Array.from(shelf.querySelectorAll('.spine'));
+  spinesInOrder.forEach(function (s) { pool.appendChild(s); });
+  buildShelf();
+  colorAllSpines();
+  attachDragHandlers();
+  persistOrder(spinesInOrder.map(function (s) { return s.dataset.pk; }));
+}
+
+function attachDragHandlers() {
+  if (!dragAllowed()) return;
+  document.querySelectorAll('#bookshelf .spine').forEach(function (spine) {
+    spine.setAttribute('draggable', 'true');
+    spine.addEventListener('dragstart', function (e) {
+      spine.classList.add('opacity-40');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', spine.dataset.pk);
+    });
+    spine.addEventListener('dragend', function () {
+      spine.classList.remove('opacity-40');
+    });
+    spine.addEventListener('dragover', function (e) {
+      e.preventDefault();
+    });
+    spine.addEventListener('drop', function (e) {
+      e.preventDefault();
+      var draggedPk = e.dataTransfer.getData('text/plain');
+      if (!draggedPk || draggedPk === spine.dataset.pk) return;
+      var dragged = document.querySelector('.spine[data-pk="' + draggedPk + '"]');
+      if (!dragged) return;
+      var rect = spine.getBoundingClientRect();
+      var before = (e.clientX - rect.left) < rect.width / 2;
+      spine.parentNode.insertBefore(dragged, before ? spine : spine.nextSibling);
+      rebuildFromCurrentOrder();
+    });
+  });
+}
+
 function refreshShelf() {
   buildShelf();
   colorAllSpines();
+  attachDragHandlers();
 }
 
 if (document.readyState === 'loading') {

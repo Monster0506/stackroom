@@ -10,7 +10,10 @@
   <div class="w-12 h-2.5 rounded-sm mx-auto mt-3" style="background:#5a4326; box-shadow: 0 1px 0 rgba(255,255,255,.15) inset;"></div>
 </div>
 
-<p class="text-center text-xs text-ink-600 mt-3 mb-5">{{ books|length }} volume{{ books|length|pluralize }} catalogued</p>
+<p class="text-center text-xs text-ink-600 mt-3 mb-5">
+  {{ books|length }} volume{{ books|length|pluralize }} catalogued
+  {% if not q %}<span class="text-ink-500">- drag a spine to reorder</span>{% endif %}
+</p>
 
 <!-- Hidden spine pool: Django renders all spines here; JS moves them onto shelves -->
 <div id="spine-pool" style="display:none">
@@ -19,7 +22,8 @@
      class="spine"
      style="width:{{ book|spine_width }}px; height:{{ book|spine_height }}px;"
      data-title="{{ book.title|escapejs }}"
-     data-w="{{ book|spine_width }}">
+     data-w="{{ book|spine_width }}"
+     data-pk="{{ book.pk }}">
 
     {% if book.cover_url %}
     <img src="{% url 'cover_image' book.pk %}" alt="" class="spine-cover" loading="lazy">

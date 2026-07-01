@@ -14,9 +14,10 @@ class Book(models.Model):
     notes = models.TextField(blank=True)
     date_added = models.DateTimeField(auto_now_add=True)
     date_finished = models.DateField(null=True, blank=True)
+    position = models.PositiveIntegerField(default=0, db_index=True)
 
     class Meta:
-        ordering = ["-date_added"]
+        ordering = ["position", "-date_added"]
 
     def __str__(self):
         return f"{self.title}: {self.author}"

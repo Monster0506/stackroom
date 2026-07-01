@@ -4,6 +4,8 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
 from django.conf import settings
+from django.db import transaction
+from django.db.models import Max
 import json
 import threading
 import urllib.request
@@ -85,6 +87,7 @@ def save_book(request):
         messages.info(request, f'"{book.title}" is already in your library.')
         return JsonResponse({"id": book.pk, "duplicate": True})
 
+    next_position = (Book.objects.aggregate(Max("position"))["position__max"] or 0) + 1
     book = Book.objects.create(
         isbn=isbn,
         title=data.get("title", "Untitled"),
@@ -94,6 +97,7 @@ def save_book(request):
         description=data.get("description", ""),
         cover_url=data.get("cover_url", ""),
         page_count=data.get("page_count") or None,
+        position=next_position,
     )
     if book.cover_url:
         threading.Thread(
@@ -145,6 +149,16 @@ def book_update(request, pk):
     book.save()
     messages.success(request, "Book updated.")
     return redirect("book_detail", pk=pk)
+
+
+@require_POST
+def reorder_books(request):
+    data = json.loads(request.body)
+    order = data.get("order", [])
+    with transaction.atomic():
+        for position, pk in enumerate(order):
+            Book.objects.filter(pk=pk).update(position=position)
+    return JsonResponse({"ok": True})
 
 
 @require_POST
