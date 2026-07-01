@@ -1,4 +1,4 @@
-# Booktracker
+# StackRoom
 
 A personal book catalog built with Django. Scan a barcode or search by title, pull in cover art and metadata automatically, and browse your collection on a searchable bookshelf.
 
