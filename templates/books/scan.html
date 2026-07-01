@@ -304,6 +304,7 @@
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
       body: JSON.stringify(pendingBook),
     });
+    if (resp.status === 403) { alert('Log in at /admin to add books.'); return; }
     const data = await resp.json();
     const title = pendingBook.title;
     pendingBook = null;
