@@ -4,7 +4,12 @@
   {% for case in bookcases %}
   <div class="min-w-[260px]">
     <div class="flex items-center justify-between mb-3">
+      {% if user.is_authenticated %}
       <h2 class="case-name font-display text-base text-ink-900 cursor-text" data-case-pk="{{ case.pk }}" tabindex="0">{{ case.name }}</h2>
+      {% else %}
+      <h2 class="font-display text-base text-ink-900">{{ case.name }}</h2>
+      {% endif %}
+      {% if user.is_authenticated %}
       <div class="flex gap-1.5">
         <form method="post" action="{% url 'shelf_add' case.pk %}">
           {% csrf_token %}
@@ -17,6 +22,7 @@
         </form>
         {% endif %}
       </div>
+      {% endif %}
     </div>
 
     {% if case.shelves.all %}
@@ -26,14 +32,14 @@
         {% for shelf in case.shelves.all %}
         <div class="flex items-center justify-between px-3">
           <span class="text-[9px] uppercase tracking-wide text-white/45 font-bold">{{ shelf.name }}</span>
-          {% if not shelf.book_count %}
+          {% if user.is_authenticated and not shelf.book_count %}
           <form method="post" action="{% url 'shelf_delete' shelf.pk %}" onsubmit="return confirm('Delete {{ shelf.name|escapejs }}?')">
             {% csrf_token %}
             <button type="submit" class="text-[9px] text-white/45 underline">Delete Shelf</button>
           </form>
           {% endif %}
         </div>
-        {% include "books/_shelf_row.html" with shelf_key=shelf.pk books=shelf.books.all drag_enabled=True %}
+        {% include "books/_shelf_row.html" with shelf_key=shelf.pk books=shelf.books.all drag_enabled=user.is_authenticated %}
         {% endfor %}
       </div>
       <div class="w-12 h-2.5 rounded-sm mx-auto mt-3" style="background:#5a4326; box-shadow: 0 1px 0 rgba(255,255,255,.15) inset;"></div>
@@ -45,12 +51,14 @@
   {% endfor %}
 </div>
 
+{% if user.is_authenticated %}
 <form method="post" action="{% url 'bookcase_add' %}">
   {% csrf_token %}
   <button type="submit" class="w-full flex items-center justify-center gap-2 label-slot text-ink-800 border border-ink-400/40 px-6 py-3.5 rounded-sm font-bold text-sm active:scale-95 transition mb-2">
     + Add Bookcase
   </button>
 </form>
+{% endif %}
 
 {% else %}
 
